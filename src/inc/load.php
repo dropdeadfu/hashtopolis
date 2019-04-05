@@ -18,7 +18,7 @@ if (strpos($HOST, ":") !== false) {
 $OBJECTS['version'] = $VERSION;
 $OBJECTS['host'] = $HOST;
 
-$INSTALL = false;
+$INSTALL = true;
 @include(dirname(__FILE__) . "/db.php");
 
 // include all .class.php files in inc dir

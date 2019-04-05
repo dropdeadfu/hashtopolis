@@ -1,0 +1,13 @@
+web:
+    image: nginx:latest
+    ports:
+        - "8088:80"
+    volumes:
+        - ./src:/app
+        - ./docker/nginx.conf:/etc/nginx/conf.d/site.conf
+    links:
+        - php
+php:
+    image: php:7.1-fpm
+    volumes:
+        - ./src:/app

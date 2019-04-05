@@ -14,8 +14,8 @@ class Encryption {
    * @return string base64 encoded hash
    */
   public static function sessionHash($id, $startTime, $username) {
-    $PEPPER = "__PEPPER1__";
-    
+    $PEPPER = "SrDJZiihthZux5jyCWWvlZsDThQoJtuvJMENJ190mZQQJGS2Jg";
+
     $KEY = pack('H*', hash("sha256", $startTime));
     $cycles = Encryption::getCount($username . $startTime, 500, 1000);
     $CIPHER = $username . $startTime;
@@ -25,7 +25,7 @@ class Encryption {
     }
     return Util::strToHex($KEY);
   }
-  
+
   /**
    * Detect if a given passwords is complex enough to be accepted as password.
    *
@@ -56,7 +56,7 @@ class Encryption {
     }
     return ($number && $special && $upper && $lower);
   }
-  
+
   /**
    * Generates a password hash out of the given parameters.
    *
@@ -65,24 +65,24 @@ class Encryption {
    * @return string hash
    */
   public static function passwordHash($password, $salt) {
-    $PEPPER = "__PEPPER2__";
-    
+    $PEPPER = "mz9pqewRGMgaY5kl3dG6KY6YaP2F1P9BZyq4xJvWiKeTsTI39y";
+
     $CIPHER = $PEPPER . $password . $salt;
     $options = array('cost' => 12);
     $CIPHER = password_hash($CIPHER, PASSWORD_BCRYPT, $options);
     return $CIPHER;
   }
-  
+
   public static function passwordVerify($password, $salt, $hash) {
-    $PEPPER = "__PEPPER2__";
-    
+    $PEPPER = "mz9pqewRGMgaY5kl3dG6KY6YaP2F1P9BZyq4xJvWiKeTsTI39y";
+
     $CIPHER = $PEPPER . $password . $salt;
     if (!password_verify($CIPHER, $hash)) {
       return false;
     }
     return true;
   }
-  
+
   /**
    * Get the number of cycles for a given string
    *
@@ -99,7 +99,7 @@ class Encryption {
     }
     return $count % $maxcycles + $mincycles;
   }
-  
+
   /**
    * Generates a hash for the validation of a user email
    *
@@ -108,8 +108,8 @@ class Encryption {
    * @return string base64 encoded hash
    */
   public static function validationHash($id, $username) {
-    $PEPPER = "__PEPPER3__";
-    
+    $PEPPER = "67eB28tYCqPtzGsCBFnpqg0ikGt0iyqFKBw7QDg5vJ32ORmZ7w";
+
     $KEY = pack('H*', hash("sha256", $id));
     $cycles = Encryption::getCount($username . $PEPPER, 500, 1000);
     $CIPHER = $id . $username;
@@ -120,6 +120,5 @@ class Encryption {
     return Util::strToHex($KEY);
   }
 }
-
 
 
