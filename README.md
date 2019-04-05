@@ -49,6 +49,12 @@ Please visit the [wiki](https://github.com/s3inlc/hashtopolis/wiki) for more inf
 
 Some screenshots of Hashtopolis (by winxp5421 and s3in!c): [Imgur1](http://imgur.com/gallery/Fj0s0) [Imgur2](http://imgur.com/gallery/LzTsI)
 
+Docker:
+docker build -t hashcat/htp .
+docker stack deploy -c docker-stack.yml hashcat
+
+(execute /app/src/install/unattended_install.php to create first user admin / hashcat123)
+
 ## Contribution Guidelines
 
 We are open to all kinds of contributions. If it's a bug fix or a new feature, feel free to create a pull request. Please consider some points:
