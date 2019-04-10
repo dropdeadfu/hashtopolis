@@ -1,10 +1,11 @@
 <?php
 
 use DBA\AccessGroupUser;
-use DBA\Config;
 use DBA\QueryFilter;
 use DBA\RightGroup;
 use DBA\User;
+use DBA\Factory;
+use DBA\StoredValue;
 
 require_once(dirname(__FILE__) . "/../inc/load.php");
 
@@ -34,8 +35,7 @@ switch ($STEP) {
       die();
     }
     
-    $OBJECTS = array();
-    $OBJECTS['32bit'] = (PHP_INT_SIZE == 4) ? true : false;
+    UI::add('32bit', (PHP_INT_SIZE == 4) ? true : false);
     if (isset($_GET['type'])) {
       $type = $_GET['type'];
       if ($type == 'install') {
@@ -46,41 +46,57 @@ switch ($STEP) {
       header("Location: index.php");
       die();
     }
-    $TEMPLATE = new Template("install/0");
-    echo $TEMPLATE->render($OBJECTS);
+    Template::loadInstance("install/0");
+    echo Template::getInstance()->render(UI::getObjects());
     break;
   case 1: //clean installation was selected
     if (isset($_GET['next'])) {
       $query = file_get_contents(dirname(__FILE__) . "/hashtopolis.sql");
-      $FACTORIES::getAgentFactory()->getDB()->query($query);
+      Factory::getAgentFactory()->getDB()->query($query);
       $baseUrl = explode("/", $_SERVER['REQUEST_URI']);
       unset($baseUrl[sizeof($baseUrl) - 1]);
       if ($baseUrl[sizeof($baseUrl) - 1] == "install") {
         unset($baseUrl[sizeof($baseUrl) - 1]);
       }
-      $urlConfig = new Config(0, 5, DConfig::BASE_URL, implode("/", $baseUrl));
-      $FACTORIES::getConfigFactory()->save($urlConfig);
+      try {
+        $urlConfig = ConfigUtils::get(DConfig::BASE_URL);
+      }
+      catch (HTException $e) {
+        die("Failure in config: " . $e->getMessage());
+      }
+      $urlConfig->setValue(implode("/", $baseUrl));
+      Factory::getConfigFactory()->update($urlConfig);
       setcookie("step", "52", time() + 3600);
       setcookie("prev", "2", time() + 3600);
       header("Location: index.php");
       die();
     }
-    $TEMPLATE = new Template("install/1");
-    echo $TEMPLATE->render(array());
+    Template::loadInstance("install/1");
+    echo Template::getInstance()->render([]);
     break;
   case 2: //installation should be finished now and user should be able to log in
-    $load = file_get_contents(dirname(__FILE__) . "/../inc/db.php");
+    $load = file_get_contents(dirname(__FILE__) . "/../inc/conf.php");
     $load = str_replace('$INSTALL = false;', '$INSTALL = true;', $load);
-    file_put_contents(dirname(__FILE__) . "/../inc/db.php", $load);
+    file_put_contents(dirname(__FILE__) . "/../inc/conf.php", $load);
     if (!file_exists(dirname(__FILE__) . "/../import")) {
       mkdir(dirname(__FILE__) . "/../import");
     }
     file_put_contents(dirname(__FILE__) . "/../import/.htaccess", "Order deny,allow\nDeny from all");
+
+    // save version and build into database
+    $version = new StoredValue("version", explode("+", $VERSION)[0]);
+    Factory::getStoredValueFactory()->save($version);
+    $build = new StoredValue("build", $BUILD);
+    Factory::getStoredValueFactory()->save($build);
     setcookie("step", "", time() - 10);
     setcookie("prev", "", time() - 10);
+
+    // protect installation directory
+    file_put_contents(dirname(__FILE__) . "/.htaccess", "Order deny,allow\nDeny from all");
+
     sleep(1);
-    $TEMPLATE = new Template("install/2");
-    echo $TEMPLATE->render(array());
+    Template::loadInstance("install/2");
+    echo Template::getInstance()->render([]);
     break;
   case 50: //one or more files/dir is not writeable
     if (isset($_GET['check'])) {
@@ -90,8 +106,8 @@ switch ($STEP) {
         die();
       }
     }
-    $TEMPLATE = new Template("install/50");
-    echo $TEMPLATE->render(array());
+    Template::loadInstance("install/50");
+    echo Template::getInstance()->render([]);
     break;
   case 51: //enter database connection details
     $fail = false;
@@ -110,41 +126,37 @@ switch ($STEP) {
         'db' => $_POST['db'],
         'port' => $_POST['port']
       );
-      if ($FACTORIES::getUserFactory()->getDB(true) === null) {
+      if (Factory::getUserFactory()->getDB(true) === null) {
         //connection not valid
         $fail = true;
       }
       else {
         //save database details
         
-        $file = file_get_contents(dirname(__FILE__) . "/../inc/db.template.php");
+        $file = file_get_contents(dirname(__FILE__) . "/../inc/conf.template.php");
         $file = str_replace("__DBUSER__", $_POST['user'], $file);
         $file = str_replace("__DBPASS__", $_POST['pass'], $file);
         $file = str_replace("__DBSERVER__", $_POST['server'], $file);
         $file = str_replace("__DBDB__", $_POST['db'], $file);
         $file = str_replace("__DBPORT__", $_POST['port'], $file);
-        file_put_contents(dirname(__FILE__) . "/../inc/db.php", $file);
+        file_put_contents(dirname(__FILE__) . "/../inc/conf.php", $file);
         setcookie("step", "$PREV", time() + 3600);
         sleep(1); // some times there are problems when reading to fast again and the file is not written to disk then
         header("Location: index.php");
         die();
       }
     }
-    $TEMPLATE = new Template("install/51");
-    echo $TEMPLATE->render(array('failed' => $fail));
+    Template::loadInstance("install/51");
+    echo Template::getInstance()->render(['failed' => $fail]);
     break;
   case 52: //database is filled with initial data now we create the user now
     // create pepper (this is required here that when we create the user, the included file already contains the right peppers
     $pepper = array(Util::randomString(50), Util::randomString(50), Util::randomString(50));
-    $crypt = file_get_contents(dirname(__FILE__) . "/../inc/Encryption.class.php");
-    $crypt = str_replace("__PEPPER1__", $pepper[0], str_replace("__PEPPER2__", $pepper[1], str_replace("__PEPPER3__", $pepper[2], $crypt)));
-    file_put_contents(dirname(__FILE__) . "/../inc/Encryption.class.php", $crypt);
-    
-    // set CSRF private key
-    $key = Util::randomString(20);
-    $csrf = file_get_contents(dirname(__FILE__) . "/../inc/CSRF.class.php");
-    $csrf = str_replace("__CSRF__", $key, $csrf);
-    file_put_contents(dirname(__FILE__) . "/../inc/CSRF.class.php", $csrf);
+    $key = Util::randomString(40);
+    $conf = file_get_contents(dirname(__FILE__) . "/../inc/conf.php");
+    $conf = str_replace("__PEPPER1__", $pepper[0], str_replace("__PEPPER2__", $pepper[1], str_replace("__PEPPER3__", $pepper[2], $conf)));
+    $conf = str_replace("__CSRF__", $key, $conf);
+    file_put_contents(dirname(__FILE__) . "/../inc/conf.php", $conf);
     
     $message = "";
     if (isset($_POST['create'])) {
@@ -155,35 +167,35 @@ switch ($STEP) {
       
       //do checks
       if (strlen($username) == 0 || strlen($password) == 0 || strlen($email) == 0 || strlen($repeat) == 0) {
-        $message = Util::getMessage('danger', "You need to fill in all fields!");
+        $message = "<div class='alert alert-danger'>You need to fill in all fields!</div>";
       }
       else if ($password != $repeat) {
-        $message = Util::getMessage('danger', "Your entered passwords do not match!");
+        $message = "<div class='alert alert-danger'>Your entered passwords do not match!</div>";
       }
       else {
-        $FACTORIES::getAgentFactory()->getDB()->beginTransaction();
+        Factory::getAgentFactory()->getDB()->beginTransaction();
         
         $qF = new QueryFilter(RightGroup::GROUP_NAME, "Administrator", "=");
-        $group = $FACTORIES::getRightGroupFactory()->filter(array($FACTORIES::FILTER => array($qF)));
+        $group = Factory::getRightGroupFactory()->filter([Factory::FILTER => $qF]);
         $group = $group[0];
         $newSalt = Util::randomString(20);
         $newHash = Encryption::passwordHash($password, $newSalt);
-        $user = new User(0, $username, $email, $newHash, $newSalt, 1, 1, 0, time(), 3600, $group->getId(), 0, "", "", "", "");
-        $FACTORIES::getUserFactory()->save($user);
+        $user = new User(null, $username, $email, $newHash, $newSalt, 1, 1, 0, time(), 3600, $group->getId(), 0, "", "", "", "");
+        Factory::getUserFactory()->save($user);
         
         // create default group
         $group = AccessUtils::getOrCreateDefaultAccessGroup();
-        $groupUser = new AccessGroupUser(0, $group->getId(), $user->getId());
-        $FACTORIES::getAccessGroupUserFactory()->save($groupUser);
+        $groupUser = new AccessGroupUser(null, $group->getId(), $user->getId());
+        Factory::getAccessGroupUserFactory()->save($groupUser);
         
-        $FACTORIES::getAgentFactory()->getDB()->commit();
+        Factory::getAgentFactory()->getDB()->commit();
         setcookie("step", "$PREV", time() + 3600);
         header("Location: index.php");
         die();
       }
     }
-    $TEMPLATE = new Template("install/52");
-    echo $TEMPLATE->render(array('message' => $message));
+    Template::loadInstance("install/52");
+    echo Template::getInstance()->render(['message' => $message]);
     break;
   default:
     die("Some error with steps happened, please start again!");

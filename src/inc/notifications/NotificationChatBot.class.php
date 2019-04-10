@@ -31,8 +31,5 @@ class HashtopolisNotificationChatBot extends HashtopolisNotification {
   }
 }
 
-$NOTIFICATIONS['ChatBot'] = new HashtopolisNotificationChatBot();
-
-
-
+HashtopolisNotification::add('ChatBot', new HashtopolisNotificationChatBot());
 

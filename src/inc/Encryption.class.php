@@ -14,18 +14,18 @@ class Encryption {
    * @return string base64 encoded hash
    */
   public static function sessionHash($id, $startTime, $username) {
-    $PEPPER = "SrDJZiihthZux5jyCWWvlZsDThQoJtuvJMENJ190mZQQJGS2Jg";
-
+    global $PEPPER;
+    
     $KEY = pack('H*', hash("sha256", $startTime));
     $cycles = Encryption::getCount($username . $startTime, 500, 1000);
     $CIPHER = $username . $startTime;
-    $CIPHER = openssl_encrypt($CIPHER, 'blowfish', $KEY, 0, substr($PEPPER, 0, 8));
+    $CIPHER = openssl_encrypt($CIPHER, 'blowfish', $KEY, 0, substr($PEPPER[0], 0, 8));
     for ($x = 0; $x < $cycles; $x++) {
-      $KEY = pack('H*', hash("sha256", $CIPHER . $id . $PEPPER . $KEY));
+      $KEY = pack('H*', hash("sha256", $CIPHER . $id . $PEPPER[0] . $KEY));
     }
     return Util::strToHex($KEY);
   }
-
+  
   /**
    * Detect if a given passwords is complex enough to be accepted as password.
    *
@@ -56,7 +56,7 @@ class Encryption {
     }
     return ($number && $special && $upper && $lower);
   }
-
+  
   /**
    * Generates a password hash out of the given parameters.
    *
@@ -65,24 +65,24 @@ class Encryption {
    * @return string hash
    */
   public static function passwordHash($password, $salt) {
-    $PEPPER = "mz9pqewRGMgaY5kl3dG6KY6YaP2F1P9BZyq4xJvWiKeTsTI39y";
-
-    $CIPHER = $PEPPER . $password . $salt;
+    global $PEPPER;
+    
+    $CIPHER = $PEPPER[1] . $password . $salt;
     $options = array('cost' => 12);
     $CIPHER = password_hash($CIPHER, PASSWORD_BCRYPT, $options);
     return $CIPHER;
   }
-
+  
   public static function passwordVerify($password, $salt, $hash) {
-    $PEPPER = "mz9pqewRGMgaY5kl3dG6KY6YaP2F1P9BZyq4xJvWiKeTsTI39y";
-
-    $CIPHER = $PEPPER . $password . $salt;
+    global $PEPPER;
+    
+    $CIPHER = $PEPPER[1] . $password . $salt;
     if (!password_verify($CIPHER, $hash)) {
       return false;
     }
     return true;
   }
-
+  
   /**
    * Get the number of cycles for a given string
    *
@@ -99,7 +99,7 @@ class Encryption {
     }
     return $count % $maxcycles + $mincycles;
   }
-
+  
   /**
    * Generates a hash for the validation of a user email
    *
@@ -108,17 +108,18 @@ class Encryption {
    * @return string base64 encoded hash
    */
   public static function validationHash($id, $username) {
-    $PEPPER = "67eB28tYCqPtzGsCBFnpqg0ikGt0iyqFKBw7QDg5vJ32ORmZ7w";
-
+    global $PEPPER;
+    
     $KEY = pack('H*', hash("sha256", $id));
-    $cycles = Encryption::getCount($username . $PEPPER, 500, 1000);
+    $cycles = Encryption::getCount($username . $PEPPER[2], 500, 1000);
     $CIPHER = $id . $username;
-    $CIPHER = openssl_encrypt($CIPHER, 'blowfish', $KEY, 0, substr($PEPPER, 0, 8));
+    $CIPHER = openssl_encrypt($CIPHER, 'blowfish', $KEY, 0, substr($PEPPER[2], 0, 8));
     for ($x = 0; $x < $cycles; $x++) {
-      $KEY = pack('H*', hash("sha256", $CIPHER . $id . $PEPPER . $username . $KEY));
+      $KEY = pack('H*', hash("sha256", $CIPHER . $id . $PEPPER[2] . $username . $KEY));
     }
     return Util::strToHex($KEY);
   }
 }
+
 
 

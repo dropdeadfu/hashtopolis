@@ -24,11 +24,20 @@ class DPretaskAction {
   
   const CREATE_TASK      = "createTask";
   const CREATE_TASK_PERM = DAccessControl::CREATE_PRETASK_ACCESS;
+  
+  const CHANGE_ATTACK      = "changeAttack";
+  const CHANGE_ATTACK_PERM = DAccessControl::CREATE_PRETASK_ACCESS;
 }
 
 class DTaskTypes {
   const NORMAL    = 0;
   const SUPERTASK = 1;
+}
+
+class DTaskStaticChunking {
+  const NORMAL     = 0;
+  const CHUNK_SIZE = 1;
+  const NUM_CHUNKS = 2;
 }
 
 class DSupertaskAction {
@@ -43,6 +52,9 @@ class DSupertaskAction {
   
   const IMPORT_SUPERTASK      = "importSupertask";
   const IMPORT_SUPERTASK_PERM = DAccessControl::CREATE_SUPERTASK_ACCESS;
+  
+  const BULK_SUPERTASK      = "bulkSupertaskCreation";
+  const BULK_SUPERTASK_PERM = DAccessControl::CREATE_SUPERTASK_ACCESS;
 }
 
 class DTaskAction {
@@ -90,4 +102,19 @@ class DTaskAction {
   
   const SET_SUPERTASK_PRIORITY      = "setSupertaskPriority";
   const SET_SUPERTASK_PRIORITY_PERM = DAccessControl::MANAGE_TASK_ACCESS;
+  
+  const ARCHIVE_TASK      = "archiveTask";
+  const ARCHIVE_TASK_PERM = DAccessControl::CREATE_TASK_ACCESS;
+  
+  const ARCHIVE_SUPERTASK      = "archiveSupertask";
+  const ARCHIVE_SUPERTASK_PERM = DAccessControl::CREATE_TASK_ACCESS;
+  
+  const CHANGE_ATTACK      = "changeAttack";
+  const CHANGE_ATTACK_PERM = DAccessControl::CREATE_TASK_ACCESS;
+  
+  const DELETE_ARCHIVED      = "deleteArchived";
+  const DELETE_ARCHIVED_PERM = DAccessControl::CREATE_TASK_ACCESS;
+  
+  const EDIT_NOTES      = "editNotes";
+  const EDIT_NOTES_PERM = DAccessControl::MANAGE_TASK_ACCESS;
 }

@@ -19,8 +19,14 @@ class Task extends AbstractModel {
   private $crackerBinaryId;
   private $crackerBinaryTypeId;
   private $taskWrapperId;
+  private $isArchived;
+  private $isPrince;
+  private $notes;
+  private $staticChunks;
+  private $chunkSize;
+  private $forcePipe;
   
-  function __construct($taskId, $taskName, $attackCmd, $chunkTime, $statusTimer, $keyspace, $keyspaceProgress, $priority, $color, $isSmall, $isCpuTask, $useNewBench, $skipKeyspace, $crackerBinaryId, $crackerBinaryTypeId, $taskWrapperId) {
+  function __construct($taskId, $taskName, $attackCmd, $chunkTime, $statusTimer, $keyspace, $keyspaceProgress, $priority, $color, $isSmall, $isCpuTask, $useNewBench, $skipKeyspace, $crackerBinaryId, $crackerBinaryTypeId, $taskWrapperId, $isArchived, $isPrince, $notes, $staticChunks, $chunkSize, $forcePipe) {
     $this->taskId = $taskId;
     $this->taskName = $taskName;
     $this->attackCmd = $attackCmd;
@@ -37,6 +43,12 @@ class Task extends AbstractModel {
     $this->crackerBinaryId = $crackerBinaryId;
     $this->crackerBinaryTypeId = $crackerBinaryTypeId;
     $this->taskWrapperId = $taskWrapperId;
+    $this->isArchived = $isArchived;
+    $this->isPrince = $isPrince;
+    $this->notes = $notes;
+    $this->staticChunks = $staticChunks;
+    $this->chunkSize = $chunkSize;
+    $this->forcePipe = $forcePipe;
   }
   
   function getKeyValueDict() {
@@ -57,6 +69,12 @@ class Task extends AbstractModel {
     $dict['crackerBinaryId'] = $this->crackerBinaryId;
     $dict['crackerBinaryTypeId'] = $this->crackerBinaryTypeId;
     $dict['taskWrapperId'] = $this->taskWrapperId;
+    $dict['isArchived'] = $this->isArchived;
+    $dict['isPrince'] = $this->isPrince;
+    $dict['notes'] = $this->notes;
+    $dict['staticChunks'] = $this->staticChunks;
+    $dict['chunkSize'] = $this->chunkSize;
+    $dict['forcePipe'] = $this->forcePipe;
     
     return $dict;
   }
@@ -76,7 +94,15 @@ class Task extends AbstractModel {
   function setId($id) {
     $this->taskId = $id;
   }
-  
+
+  /**
+   * Used to serialize the data contained in the model
+   * @return array
+   */
+  public function expose() {
+    return get_object_vars($this);
+  }
+
   function getTaskName(){
     return $this->taskName;
   }
@@ -196,6 +222,54 @@ class Task extends AbstractModel {
   function setTaskWrapperId($taskWrapperId){
     $this->taskWrapperId = $taskWrapperId;
   }
+  
+  function getIsArchived(){
+    return $this->isArchived;
+  }
+  
+  function setIsArchived($isArchived){
+    $this->isArchived = $isArchived;
+  }
+  
+  function getIsPrince(){
+    return $this->isPrince;
+  }
+  
+  function setIsPrince($isPrince){
+    $this->isPrince = $isPrince;
+  }
+  
+  function getNotes(){
+    return $this->notes;
+  }
+  
+  function setNotes($notes){
+    $this->notes = $notes;
+  }
+  
+  function getStaticChunks(){
+    return $this->staticChunks;
+  }
+  
+  function setStaticChunks($staticChunks){
+    $this->staticChunks = $staticChunks;
+  }
+  
+  function getChunkSize(){
+    return $this->chunkSize;
+  }
+  
+  function setChunkSize($chunkSize){
+    $this->chunkSize = $chunkSize;
+  }
+  
+  function getForcePipe(){
+    return $this->forcePipe;
+  }
+  
+  function setForcePipe($forcePipe){
+    $this->forcePipe = $forcePipe;
+  }
 
   const TASK_ID = "taskId";
   const TASK_NAME = "taskName";
@@ -213,4 +287,10 @@ class Task extends AbstractModel {
   const CRACKER_BINARY_ID = "crackerBinaryId";
   const CRACKER_BINARY_TYPE_ID = "crackerBinaryTypeId";
   const TASK_WRAPPER_ID = "taskWrapperId";
+  const IS_ARCHIVED = "isArchived";
+  const IS_PRINCE = "isPrince";
+  const NOTES = "notes";
+  const STATIC_CHUNKS = "staticChunks";
+  const CHUNK_SIZE = "chunkSize";
+  const FORCE_PIPE = "forcePipe";
 }

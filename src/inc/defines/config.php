@@ -5,6 +5,7 @@ class DConfigType {
   const NUMBER_INPUT = "number";
   const TICKBOX      = "checkbox";
   const EMAIL        = "email";
+  const SELECT       = "select";
 }
 
 class DConfigAction {
@@ -21,19 +22,38 @@ class DConfigAction {
   const CLEAR_ALL_PERM = DAccessControl::SERVER_CONFIG_ACCESS;
 }
 
+class DProxyTypes {
+  const HTTP   = 'HTTP';
+  const HTTPS  = 'HTTPS';
+  const SOCKS4 = 'SOCKS4';
+  const SOCKS5 = 'SOCKS5';
+}
+
 // used config values
 class DConfig {
   // Section: Cracking/Tasks
-  const BENCHMARK_TIME  = "benchtime";
-  const CHUNK_DURATION  = "chunktime";
-  const CHUNK_TIMEOUT   = "chunktimeout";
-  const AGENT_TIMEOUT   = "agenttimeout";
-  const FIELD_SEPARATOR = "fieldseparator";
-  const HASHLIST_ALIAS  = "hashlistAlias";
-  const STATUS_TIMER    = "statustimer";
-  const BLACKLIST_CHARS = "blacklistChars";
-  const DISP_TOLERANCE  = "disptolerance";
-  const DEFAULT_BENCH   = "defaultBenchmark";
+  const BENCHMARK_TIME         = "benchtime";
+  const CHUNK_DURATION         = "chunktime";
+  const CHUNK_TIMEOUT          = "chunktimeout";
+  const AGENT_TIMEOUT          = "agenttimeout";
+  const FIELD_SEPARATOR        = "fieldseparator";
+  const HASHLIST_ALIAS         = "hashlistAlias";
+  const STATUS_TIMER           = "statustimer";
+  const BLACKLIST_CHARS        = "blacklistChars";
+  const DISP_TOLERANCE         = "disptolerance";
+  const DEFAULT_BENCH          = "defaultBenchmark";
+  const RULE_SPLIT_SMALL_TASKS = "ruleSplitSmallTasks";
+  const RULE_SPLIT_ALWAYS      = "ruleSplitAlways";
+  const RULE_SPLIT_DISABLE     = "ruleSplitDisable";
+  const PRINCE_LINK            = "princeLink";
+  const AGENT_DATA_LIFETIME    = "agentDataLifetime";
+  const DISABLE_TRIMMING       = "disableTrimming";
+  const PRIORITY_0_START       = "priority0Start";
+  const HASHCAT_BRAIN_ENABLE   = "hashcatBrainEnable";
+  const HASHCAT_BRAIN_HOST     = "hashcatBrainHost";
+  const HASHCAT_BRAIN_PORT     = "hashcatBrainPort";
+  const HASHCAT_BRAIN_PASS     = "hashcatBrainPass";
+  const HASHLIST_IMPORT_CHECK  = "hashlistImportCheck";
   
   // Section: Yubikey
   const YUBIKEY_ID  = "yubikey_id";
@@ -55,17 +75,72 @@ class DConfig {
   const HASHES_PER_PAGE       = "hashesPerPage";
   const HIDE_IP_INFO          = "hideIpInfo";
   const SHOW_TASK_PERFORMANCE = "showTaskPerformance";
+  const AGENT_STAT_LIMIT      = "agentStatLimit";
+  const AGENT_STAT_TENSION    = "agentStatTension";
+  const MAX_SESSION_LENGTH    = "maxSessionLength";
   
   // Section: Server
-  const BASE_URL           = "baseUrl";
-  const BASE_HOST          = "baseHost";
-  const EMAIL_SENDER       = "emailSender";
-  const EMAIL_SENDER_NAME  = "emailSenderName";
-  const TELEGRAM_BOT_TOKEN = "telegramBotToken";
-  const CONTACT_EMAIL      = "contactEmail";
-  const VOUCHER_DELETION   = "voucherDeletion";
-  const S_NAME             = "jeSuisHashtopussy";
+  const BASE_URL          = "baseUrl";
+  const BASE_HOST         = "baseHost";
+  const EMAIL_SENDER      = "emailSender";
+  const EMAIL_SENDER_NAME = "emailSenderName";
+  const CONTACT_EMAIL     = "contactEmail";
+  const VOUCHER_DELETION  = "voucherDeletion";
+  const S_NAME            = "jeSuisHashtopussy";
+  const SERVER_LOG_LEVEL  = "serverLogLevel";
+  const ALLOW_DEREGISTER  = "allowDeregister";
   
+  // Section: Multicast
+  const MULTICAST_ENABLE    = "multicastEnable";
+  const MULTICAST_DEVICE    = "multicastDevice";
+  const MULTICAST_TR_ENABLE = "multicastTransferRateEnable";
+  const MULTICAST_TR        = "multicastTranserRate";
+  
+  // Section: Notifications
+  const TELEGRAM_PROXY_ENABLE = "telegramProxyEnable";
+  const TELEGRAM_BOT_TOKEN    = "telegramBotToken";
+  const TELEGRAM_PROXY_SERVER = "telegramProxyServer";
+  const TELEGRAM_PROXY_PORT   = "telegramProxyPort";
+  const TELEGRAM_PROXY_TYPE   = "telegramProxyType";
+  
+  static function getConstants() {
+    try {
+      $oClass = new ReflectionClass(__CLASS__);
+    }
+    catch (ReflectionException $e) {
+      die("Exception: " . $e->getMessage());
+    }
+    return $oClass->getConstants();
+  }
+  
+  /**
+   * Gives the selection for the configuration values which are selections.
+   * @param string $config
+   * @return DataSet
+   */
+  public static function getSelection($config) {
+    switch ($config) {
+      case DConfig::TELEGRAM_PROXY_TYPE:
+        return new DataSet([
+          DProxyTypes::HTTP => DProxyTypes::HTTP,
+          DProxyTypes::HTTPS => DProxyTypes::HTTPS,
+          DProxyTypes::SOCKS4 => DProxyTypes::SOCKS4,
+          DProxyTypes::SOCKS5 => DProxyTypes::SOCKS5
+        ]
+        );
+      case DConfig::SERVER_LOG_LEVEL:
+        return new DataSet([
+          DServerLog::TRACE => "TRACE",
+          DServerLog::DEBUG => "DEBUG",
+          DServerLog::INFO => "INFO",
+          DServerLog::WARNING => "WARNING",
+          DServerLog::ERROR => "ERROR",
+          DServerLog::FATAL => "FATAL"
+        ]
+        );
+    }
+    return new DataSet(["Not found!"]);
+  }
   
   /**
    * Gives the format which a config input should have. Default is string if it's not a known config.
@@ -132,6 +207,56 @@ class DConfig {
         return DConfigType::TICKBOX;
       case DConfig::SHOW_TASK_PERFORMANCE:
         return DConfigType::TICKBOX;
+      case DConfig::RULE_SPLIT_ALWAYS:
+        return DConfigType::TICKBOX;
+      case DConfig::RULE_SPLIT_SMALL_TASKS:
+        return DConfigType::TICKBOX;
+      case DConfig::RULE_SPLIT_DISABLE:
+        return DConfigType::TICKBOX;
+      case DConfig::PRINCE_LINK:
+        return DConfigType::STRING_INPUT;
+      case DConfig::AGENT_STAT_LIMIT:
+        return DConfigType::NUMBER_INPUT;
+      case DConfig::AGENT_DATA_LIFETIME:
+        return DConfigType::NUMBER_INPUT;
+      case DConfig::AGENT_STAT_TENSION:
+        return DConfigType::TICKBOX;
+      case DConfig::MULTICAST_ENABLE:
+        return DConfigType::TICKBOX;
+      case DConfig::MULTICAST_DEVICE:
+        return DConfigType::STRING_INPUT;
+      case DConfig::MULTICAST_TR_ENABLE:
+        return DConfigType::TICKBOX;
+      case DConfig::MULTICAST_TR:
+        return DConfigType::NUMBER_INPUT;
+      case DConfig::TELEGRAM_PROXY_ENABLE:
+        return DConfigType::TICKBOX;
+      case DConfig::TELEGRAM_PROXY_PORT:
+        return DConfigType::NUMBER_INPUT;
+      case DConfig::TELEGRAM_PROXY_SERVER:
+        return DConfigType::STRING_INPUT;
+      case DConfig::TELEGRAM_PROXY_TYPE:
+        return DConfigType::SELECT;
+      case DConfig::DISABLE_TRIMMING:
+        return DConfigType::TICKBOX;
+      case DConfig::PRIORITY_0_START:
+        return DConfigType::TICKBOX;
+      case DConfig::SERVER_LOG_LEVEL:
+        return DConfigType::SELECT;
+      case DConfig::MAX_SESSION_LENGTH:
+        return DConfigType::NUMBER_INPUT;
+      case DConfig::HASHCAT_BRAIN_ENABLE:
+        return DConfigType::TICKBOX;
+      case DConfig::HASHCAT_BRAIN_HOST:
+        return DConfigType::STRING_INPUT;
+      case DConfig::HASHCAT_BRAIN_PORT:
+        return DConfigType::NUMBER_INPUT;
+      case DConfig::HASHCAT_BRAIN_PASS:
+        return DConfigType::STRING_INPUT;
+      case DConfig::HASHLIST_IMPORT_CHECK:
+        return DConfigType::TICKBOX;
+      case DConfig::ALLOW_DEREGISTER:
+        return DConfigType::TICKBOX;
     }
     return DConfigType::STRING_INPUT;
   }
@@ -143,9 +268,9 @@ class DConfig {
   public static function getConfigDescription($config) {
     switch ($config) {
       case DConfig::BENCHMARK_TIME:
-        return "Time in seconds an agent should benchmark a task";
+        return "Time in seconds an agent should benchmark a task.";
       case DConfig::CHUNK_DURATION:
-        return "Time in seconds a client should be working on a single chunk";
+        return "Time in seconds a client should be working on a single chunk.";
       case DConfig::CHUNK_TIMEOUT:
         return "Time in seconds the server will consider an issued chunk as inactive or timed out and will reallocate to another client.";
       case DConfig::AGENT_TIMEOUT:
@@ -153,33 +278,33 @@ class DConfig {
       case DConfig::HASHES_PAGE_SIZE:
         return "Number of hashes shown on each page of the hashes view.";
       case DConfig::FIELD_SEPARATOR:
-        return "The separator character used to separate hash and plain (or salt)";
+        return "The separator character used to separate hash and plain (or salt).";
       case DConfig::HASHLIST_ALIAS:
-        return "The string used as hashlist alias when creating a task";
+        return "The string used as hashlist alias when creating a task.";
       case DConfig::STATUS_TIMER:
-        return "Interval in seconds clients should report back to the server. (cracks, status, and progress)";
+        return "Interval in seconds clients should report back to the server. (cracks, status, and progress).";
       case DConfig::BLACKLIST_CHARS:
-        return "Characters that are not allowed to be used in attack command inputs";
+        return "Characters that are not allowed to be used in attack command inputs.";
       case DConfig::NUMBER_LOGENTRIES:
-        return "Number of log entries that should be saved. When this number is exceeded by 120%, the oldest will be overwritten";
+        return "Number of log entries that should be saved. When this number is exceeded by 120%, the oldest will be overwritten.";
       case DConfig::TIME_FORMAT:
-        return "Set the time format. Use syntax for PHPs date() method";
+        return "Set the time format. Use syntax for PHPs date() method.";
       case DConfig::BASE_URL:
-        return "Base url for the webpage (this does not include hostname and is normally determined automatically on the installation)";
+        return "Base url for the webpage (this does not include hostname and is normally determined automatically on the installation).";
       case DConfig::DISP_TOLERANCE:
-        return "Allowable deviation in the final chunk of a task in percent. (avoids issuing small chunks when the remaining part of a task is slightly bigger than the normal chunk size)";
+        return "Allowable deviation in the final chunk of a task in percent.<br>(avoids issuing small chunks when the remaining part of a task is slightly bigger than the normal chunk size).";
       case DConfig::BATCH_SIZE:
-        return "Batch size of SQL query when hashlist is sent to the agent";
+        return "Batch size of SQL query when hashlist is sent to the agent.";
       case DConfig::YUBIKEY_ID:
-        return "Yubikey Client Id";
+        return "Yubikey Client ID.";
       case DConfig::YUBIKEY_KEY:
-        return "Yubikey Secret Key";
+        return "Yubikey Secret Key.";
       case DConfig::YUBIKEY_URL:
-        return "Yubikey API Url";
+        return "Yubikey API URL.";
       case DConfig::BASE_HOST:
         return "Base hostname/port/protocol to use. Only fill this in to override the auto-determined value.";
       case DConfig::DONATE_OFF:
-        return "Hide donation information";
+        return "Hide donation information.";
       case DConfig::PLAINTEXT_MAX_LENGTH:
         return "Max length of a plaintext. (WARNING: This change may take a long time depending on DB size!)";
       case DConfig::HASH_MAX_LENGTH:
@@ -206,6 +331,56 @@ class DConfig {
         return "Use speed benchmark as default.";
       case DConfig::SHOW_TASK_PERFORMANCE:
         return "Show cracks/minute for tasks which are running.";
+      case DConfig::RULE_SPLIT_SMALL_TASKS:
+        return "When rule splitting is applied for tasks, always make them a small task.";
+      case DConfig::RULE_SPLIT_ALWAYS:
+        return "Even do rule splitting when there are not enough rules but just the benchmark is too high.<br>Can result in subtasks with just one rule.";
+      case DConfig::RULE_SPLIT_DISABLE:
+        return "Disable automatic task splitting with large rule files.";
+      case DConfig::PRINCE_LINK:
+        return "Download link for the prince preprocessor binaries.";
+      case DConfig::AGENT_STAT_LIMIT:
+        return "Maximal number of data points showing of agent gpu data.";
+      case DConfig::AGENT_DATA_LIFETIME:
+        return "Minimum time in seconds how long agent data about gpu temperature and utility is kept on the server.";
+      case DConfig::AGENT_STAT_TENSION:
+        return "Draw straigth lines in agent data graph  instead of bezier curves.";
+      case DConfig::MULTICAST_ENABLE:
+        return "Enable UDP multicast distribution of files to agents. (Make sure you did all the preparation before activating)<br>You can read more informations here: <a href='https://github.com/s3inlc/hashtopolis-runner/blob/master/README.md' target='_blank'>https://github.com/s3inlc/hashtopolis-runner</a>";
+      case DConfig::MULTICAST_DEVICE:
+        return "Network device of the server to be used for the multicast distribution.";
+      case DConfig::MULTICAST_TR_ENABLE:
+        return "Instead of the built in UFTP flow control, use a static set transfer rate<br>(Important: Setting this value wrong can affect the functionality, only use this if you are sure this transfer rate is feasible)";
+      case DConfig::MULTICAST_TR:
+        return "Set static transfer rate in case it is activated (in Kbit/s)";
+      case DConfig::TELEGRAM_PROXY_ENABLE:
+        return "Enable using a proxy for the telegram notification bot.";
+      case DConfig::TELEGRAM_PROXY_PORT:
+        return "Set the port for the telegram notification proxy.";
+      case DConfig::TELEGRAM_PROXY_SERVER:
+        return "Server url of the proxy to use for telegram notifications.";
+      case DConfig::TELEGRAM_PROXY_TYPE:
+        return "Proxy type to use for telegram notifications.";
+      case DConfig::DISABLE_TRIMMING:
+        return "Disable trimming of chunks and redo whole chunks.";
+      case DConfig::PRIORITY_0_START:
+        return "Also automatically assign tasks with priority 0.";
+      case DConfig::SERVER_LOG_LEVEL:
+        return "Server level to be logged on the server to file.";
+      case DConfig::MAX_SESSION_LENGTH:
+        return "Max session length users can configure (in hours).";
+      case DConfig::HASHCAT_BRAIN_ENABLE:
+        return "Allow hashcat brain to be used for hashlists";
+      case DConfig::HASHCAT_BRAIN_HOST:
+        return "Host to be used for hashcat brain (must be reachable by agents)";
+      case DConfig::HASHCAT_BRAIN_PORT:
+        return "Port for hashcat brain";
+      case DConfig::HASHCAT_BRAIN_PASS:
+        return "Password to be used to access hashcat brain server";
+      case DConfig::HASHLIST_IMPORT_CHECK:
+        return "Check all hashes of a hashlist on import in case they are already cracked in another list";
+      case DConfig::ALLOW_DEREGISTER:
+        return "Allow clients to deregister themselves automatically from the server.";
     }
     return $config;
   }

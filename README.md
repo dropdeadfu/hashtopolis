@@ -2,7 +2,9 @@
 
 <img src="https://github.com/s3inlc/hashtopolis/blob/master/src/static/logo.png" alt='Hashtopolis' width="100">
 
-[![CodeFactor](https://www.codefactor.io/repository/github/s3inlc/hashtopolis/badge/master)](https://www.codefactor.io/repository/github/s3inlc/hashtopolis/overview/master)
+[![CodeFactor](https://www.codefactor.io/repository/github/s3inlc/hashtopolis/badge)](https://www.codefactor.io/repository/github/s3inlc/hashtopolis)
+[![LoC](https://tokei.rs/b1/github/s3inlc/Hashtopolis?category=code)](https://github.com/s3inlc/Hashtopolis)
+[![Test Status](https://travis-ci.org/s3inlc/hashtopolis.svg?branch=master)](https://travis-ci.org/s3inlc/hashtopolis)
 
 Hashtopolis is a multi-platform client-server tool for distributing hashcat tasks to multiple computers. The main goals for Hashtopolis's development are portability, robustness, multi-user support, and multiple groups management.
 The application has two parts:
@@ -16,7 +18,7 @@ The server part runs on PHP using MySQL as the database back end. It is vital th
 
 The web admin interface is the single point of access for all client agents. New agent deployments require a one-time password generated in the New Agent tab. This reduces the risk of leaking hashes or files to rogue or fake agents.
 
-There are parts of the documentation and wiki which are not up-to-date. If you see anything wrong or have questions on understanding descriptions, feel free to contact us on Twitter (@s3inlc, @winxp5421) or join our Discord server (https://discord.gg/S2NTxbz)
+There are parts of the documentation and wiki which are not up-to-date. If you see anything wrong or have questions on understanding descriptions, feel free to contact us on Twitter (@s3inlc, @winxp5421), join our Discord server (https://discord.gg/S2NTxbz) or join our Forum (https://hashtopolis.org).
 
 To report a bug, please create an issue and try to describe the problem as accurately as possible. This helps us to identify the bug and see if it is reproducible.
 
@@ -42,6 +44,8 @@ In an effort to make the Hashtopussy project conform to a more politically neutr
 - Small and/or CPU-only tasks
 - Group assignment for agents and users for fine-grained access-control
 - Compatible with crackers supporting certain flags
+- Report generation for executed attacks and agent status
+- Multiple file distribution variants
 
 ## Setup and Usage
 
@@ -81,3 +85,4 @@ ETH: 0x06B3Ae7561AD763eF58Df9C37deB6757bDA2BC0c
 * atom for [hashcat](https://github.com/hashcat/hashcat)
 * curlyboi for the original [Hashtopus](https://github.com/curlyboi/hashtopus) code
 * 7zip binaries are compiled from [here](https://sourceforge.net/projects/sevenzip/files/7-Zip/16.04/)
+* uftp binaries are compiled from [here](http://uftp-multicast.sourceforge.net/)

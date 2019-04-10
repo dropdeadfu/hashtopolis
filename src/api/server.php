@@ -99,7 +99,39 @@ switch ($QUERY[PQuery::ACTION]) {
   case PActions::SEND_PROGRESS:
     $api = new APISendProgress();
     break;
+  /**
+   * The client requests a list of filenames which are deleted on the server to check if he should clean up some files
+   */
+  case PActions::GET_FILE_STATUS:
+    $api = new APIGetFileStatus();
+    break;
+  /**
+   * Retrieve a health check (if available)
+   */
+  case PActions::GET_HEALTH_CHECK:
+    $api = new APIGetHealthCheck();
+    break;
+  /**
+   * Send the results of a health check
+   */
+  case PActions::SEND_HEALTH_CHECK:
+    $api = new APISendHealthCheck();
+    break;
+  /**
+   * Retrieve the found hashes of a hashlist
+   */
+  case PActions::GET_FOUND:
+    $api = new APIGetFound();
+    break;
+  /**
+   * De-register a client on exit
+   */
+  case PActions::DEREGISTER:
+    $api = new APIDeRegisterAgent();
+    break;
 }
+
+DServerLog::log(DServerLog::TRACE, "Received from " . Util::getIP() . ": " . json_encode($QUERY));
 
 if ($api == null) {
   $api = new APITestConnection();

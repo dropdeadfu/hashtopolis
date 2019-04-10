@@ -2,39 +2,43 @@
 
 use DBA\Assignment;
 use DBA\QueryFilter;
+use DBA\Factory;
 
 class APIGetHashlist extends APIBasic {
   public function execute($QUERY = array()) {
-    global $FACTORIES;
-    
     //check required values
     if (!PQueryGetHashlist::isValid($QUERY)) {
       $this->sendErrorResponse(PActions::GET_HASHLIST, "Invalid hashlist query!");
     }
     $this->checkToken(PActions::GET_HASHLIST, $QUERY);
     
-    $hashlist = $FACTORIES::getHashlistFactory()->get($QUERY[PQueryGetHashlist::HASHLIST_ID]);
+    $hashlist = Factory::getHashlistFactory()->get($QUERY[PQueryGetHashlist::HASHLIST_ID]);
     if ($hashlist == null) {
       $this->sendErrorResponse(PActions::GET_HASHLIST, "Invalid hashlist!");
     }
     
+    DServerLog::log(DServerLog::DEBUG, "Requesting a hashlist...", [$this->agent, $hashlist]);
+    
     $qF = new QueryFilter(Assignment::AGENT_ID, $this->agent->getId(), "=");
-    $assignment = $FACTORIES::getAssignmentFactory()->filter(array($FACTORIES::FILTER => array($qF)), true);
+    $assignment = Factory::getAssignmentFactory()->filter([Factory::FILTER => $qF], true);
     if ($assignment == null) {
       $this->sendErrorResponse(PActions::GET_HASHLIST, "Agent is not assigned to a task!");
     }
     
-    $task = $FACTORIES::getTaskFactory()->get($assignment->getTaskId());
+    $task = Factory::getTaskFactory()->get($assignment->getTaskId());
     if ($task == null) {
+      DServerLog::log(DServerLog::WARNING, "Assignment contained invalid task!", [$this->agent, $assignment]);
       $this->sendErrorResponse(PActions::GET_HASHLIST, "Assignment contains invalid task!");
     }
     
-    $taskWrapper = $FACTORIES::getTaskWrapperFactory()->get($task->getTaskWrapperId());
+    $taskWrapper = Factory::getTaskWrapperFactory()->get($task->getTaskWrapperId());
     if ($taskWrapper == null) {
+      DServerLog::log(DServerLog::FATAL, "Inconsistency between taskWrapper and tasks!", [$this->agent, $task]);
       $this->sendErrorResponse(PActions::GET_HASHLIST, "Inconsistent taskWrapper for task!");
     }
     
     if ($taskWrapper->getHashlistId() != $hashlist->getId()) {
+      DServerLog::log(DServerLog::WARNING, "Agent requested hashlist not used for task!", [$this->agent, $taskWrapper, $task, $hashlist]);
       $this->sendErrorResponse(PActions::GET_HASHLIST, "This hashlist is not used for the assigned task!");
     }
     else if ($this->agent->getIsTrusted() < $hashlist->getIsSecret()) {

@@ -4,6 +4,10 @@ class DLimits {
   const ACCESS_GROUP_MAX_LENGTH = 50;
 }
 
+class DZaps {
+  const LAST_ZAP_CLEANING = "lastZapCleaning";
+}
+
 // log entry types
 class DLogEntry {
   const WARN  = "warning";
@@ -25,6 +29,12 @@ class DStats {
   const TASKS_FINISHED     = "tasksFinished";
   const TASKS_RUNNING      = "tasksRunning";
   const TASKS_QUEUED       = "tasksQueued";
+  
+  const LAST_STAT_CLEANING = "lastStatCleaning";
+}
+
+class DPrince {
+  const PRINCE_KEYSPACE = -1605;
 }
 
 // operating systems

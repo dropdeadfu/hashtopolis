@@ -9,14 +9,18 @@ class TaskWrapper extends AbstractModel {
   private $hashlistId;
   private $accessGroupId;
   private $taskWrapperName;
+  private $isArchived;
+  private $cracked;
   
-  function __construct($taskWrapperId, $priority, $taskType, $hashlistId, $accessGroupId, $taskWrapperName) {
+  function __construct($taskWrapperId, $priority, $taskType, $hashlistId, $accessGroupId, $taskWrapperName, $isArchived, $cracked) {
     $this->taskWrapperId = $taskWrapperId;
     $this->priority = $priority;
     $this->taskType = $taskType;
     $this->hashlistId = $hashlistId;
     $this->accessGroupId = $accessGroupId;
     $this->taskWrapperName = $taskWrapperName;
+    $this->isArchived = $isArchived;
+    $this->cracked = $cracked;
   }
   
   function getKeyValueDict() {
@@ -27,6 +31,8 @@ class TaskWrapper extends AbstractModel {
     $dict['hashlistId'] = $this->hashlistId;
     $dict['accessGroupId'] = $this->accessGroupId;
     $dict['taskWrapperName'] = $this->taskWrapperName;
+    $dict['isArchived'] = $this->isArchived;
+    $dict['cracked'] = $this->cracked;
     
     return $dict;
   }
@@ -46,7 +52,15 @@ class TaskWrapper extends AbstractModel {
   function setId($id) {
     $this->taskWrapperId = $id;
   }
-  
+
+  /**
+   * Used to serialize the data contained in the model
+   * @return array
+   */
+  public function expose() {
+    return get_object_vars($this);
+  }
+
   function getPriority(){
     return $this->priority;
   }
@@ -86,6 +100,22 @@ class TaskWrapper extends AbstractModel {
   function setTaskWrapperName($taskWrapperName){
     $this->taskWrapperName = $taskWrapperName;
   }
+  
+  function getIsArchived(){
+    return $this->isArchived;
+  }
+  
+  function setIsArchived($isArchived){
+    $this->isArchived = $isArchived;
+  }
+  
+  function getCracked(){
+    return $this->cracked;
+  }
+  
+  function setCracked($cracked){
+    $this->cracked = $cracked;
+  }
 
   const TASK_WRAPPER_ID = "taskWrapperId";
   const PRIORITY = "priority";
@@ -93,4 +123,6 @@ class TaskWrapper extends AbstractModel {
   const HASHLIST_ID = "hashlistId";
   const ACCESS_GROUP_ID = "accessGroupId";
   const TASK_WRAPPER_NAME = "taskWrapperName";
+  const IS_ARCHIVED = "isArchived";
+  const CRACKED = "cracked";
 }

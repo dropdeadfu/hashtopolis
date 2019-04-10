@@ -1,18 +1,8 @@
 <?php
 
-use DBA\AccessGroupAgent;
 use DBA\Agent;
-use DBA\Assignment;
-use DBA\Chunk;
-use DBA\ContainFilter;
-use DBA\File;
-use DBA\FileTask;
-use DBA\Hashlist;
-use DBA\JoinFilter;
-use DBA\OrderFilter;
 use DBA\QueryFilter;
-use DBA\Task;
-use DBA\TaskWrapper;
+use DBA\Factory;
 
 abstract class APIBasic {
   /** @var Agent */
@@ -20,22 +10,21 @@ abstract class APIBasic {
   
   /**
    * @param array $QUERY input query sent to the API
+   * @throws HTException
    */
   public abstract function execute($QUERY = array());
   
   protected function sendResponse($RESPONSE) {
     header("Content-Type: application/json");
-    echo json_encode($RESPONSE, true);
+    echo json_encode($RESPONSE);
     die();
   }
   
   protected function updateAgent($action) {
-    global $FACTORIES;
-    
     $this->agent->setLastIp(Util::getIP());
     $this->agent->setLastAct($action);
     $this->agent->setLastTime(time());
-    $FACTORIES->getAgentFactory()->update($this->agent);
+    Factory::getAgentFactory()->update($this->agent);
   }
   
   public function sendErrorResponse($action, $msg) {
@@ -44,39 +33,17 @@ abstract class APIBasic {
     $ANS[PResponseErrorMessage::RESPONSE] = PValues::ERROR;
     $ANS[PResponseErrorMessage::MESSAGE] = $msg;
     header("Content-Type: application/json");
-    echo json_encode($ANS, true);
+    echo json_encode($ANS);
     die();
   }
   
   public function checkToken($action, $QUERY) {
-    global $FACTORIES;
-    
     $qF = new QueryFilter(Agent::TOKEN, $QUERY[PQuery::TOKEN], "=");
-    $agent = $FACTORIES::getAgentFactory()->filter(array($FACTORIES::FILTER => array($qF)), true);
+    $agent = Factory::getAgentFactory()->filter([Factory::FILTER => array($qF)], true);
     if ($agent == null) {
+      DServerLog::log(DServerLog::WARNING, "Agent from " . Util::getIP() . " sent invalid token!");
       $this->sendErrorResponse($action, "Invalid token!");
     }
     $this->agent = $agent;
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
