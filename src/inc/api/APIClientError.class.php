@@ -3,11 +3,10 @@
 use DBA\AgentError;
 use DBA\Assignment;
 use DBA\QueryFilter;
+use DBA\Factory;
 
 class APIClientError extends APIBasic {
   public function execute($QUERY = array()) {
-    global $FACTORIES;
-    
     //check required values
     if (!PQueryClientError::isValid($QUERY)) {
       $this->sendErrorResponse(PActions::CLIENT_ERROR, "Invalid error query!");
@@ -15,31 +14,41 @@ class APIClientError extends APIBasic {
     $this->checkToken(PActions::CLIENT_ERROR, $QUERY);
     
     // load task wrapper
-    $task = $FACTORIES::getTaskFactory()->get($QUERY[PQueryClientError::TASK_ID]);
+    $task = Factory::getTaskFactory()->get($QUERY[PQueryClientError::TASK_ID]);
     if ($task == null) {
+      DServerLog::log(DServerLog::WARNING, "Agent " . $this->agent->getId() . " tried to send error for invalid task!");
       $this->sendErrorResponse(PActions::CLIENT_ERROR, "Invalid task!");
     }
     
     //check assignment
     $qF1 = new QueryFilter(Assignment::AGENT_ID, $this->agent->getId(), "=");
     $qF2 = new QueryFilter(Assignment::TASK_ID, $task->getId(), "=");
-    $assignment = $FACTORIES::getAssignmentFactory()->filter(array($FACTORIES::FILTER => array($qF1, $qF2)), true);
+    $assignment = Factory::getAssignmentFactory()->filter([Factory::FILTER => [$qF1, $qF2]], true);
     if ($assignment == null) {
+      DServerLog::log(DServerLog::WARNING, "Agent " . $this->agent->getId() . " tried to send error for task he is not assigned to!");
       $this->sendErrorResponse(PActions::CLIENT_ERROR, "Agent is not assigned to this task!");
     }
     
-    //save error message
-    $error = new AgentError(0, $this->agent->getId(), $task->getId(), time(), $QUERY[PQueryClientError::MESSAGE]);
-    $FACTORIES::getAgentErrorFactory()->save($error);
+    DServerLog::log(DServerLog::INFO, "Agent " . $this->agent->getId() . " sent error: " . $QUERY[PQueryClientError::MESSAGE]);
+    if ($this->agent->getIgnoreErrors() <= DAgentIgnoreErrors::IGNORE_SAVE) {
+      //save error message
+      $chunkId = null;
+      if(isset($QUERY[PQueryClientError::CHUNK_ID])){
+        $chunkId = intval($QUERY[PQueryClientError::CHUNK_ID]);
+      }
+      $error = new AgentError(null, $this->agent->getId(), $task->getId(), $chunkId, time(), $QUERY[PQueryClientError::MESSAGE]);
+      Factory::getAgentErrorFactory()->save($error);
+      
+      $payload = new DataSet(array(DPayloadKeys::AGENT => $this->agent, DPayloadKeys::AGENT_ERROR => $QUERY[PQueryClientError::MESSAGE]));
+      NotificationHandler::checkNotifications(DNotificationType::AGENT_ERROR, $payload);
+      NotificationHandler::checkNotifications(DNotificationType::OWN_AGENT_ERROR, $payload);
+    }
     
-    $payload = new DataSet(array(DPayloadKeys::AGENT => $this->agent, DPayloadKeys::AGENT_ERROR => $QUERY[PQueryClientError::MESSAGE]));
-    NotificationHandler::checkNotifications(DNotificationType::AGENT_ERROR, $payload);
-    NotificationHandler::checkNotifications(DNotificationType::OWN_AGENT_ERROR, $payload);
-    
-    if ($this->agent->getIgnoreErrors() == 0) {
+    if ($this->agent->getIgnoreErrors() == DAgentIgnoreErrors::NO) {
       //deactivate agent
       $this->agent->setIsActive(0);
     }
+    
     $this->updateAgent(PActions::CLIENT_ERROR);
     $this->sendResponse(array(
         PQueryClientError::ACTION => PActions::CLIENT_ERROR,

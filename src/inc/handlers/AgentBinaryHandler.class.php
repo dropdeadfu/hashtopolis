@@ -1,8 +1,5 @@
 <?php
 
-use DBA\AgentBinary;
-use DBA\QueryFilter;
-
 class AgentBinaryHandler implements Handler {
   
   public function __construct($id = null) {
@@ -10,107 +7,44 @@ class AgentBinaryHandler implements Handler {
   }
   
   public function handle($action) {
-    global $ACCESS_CONTROL;
-    
-    switch ($action) {
-      case DAgentBinaryAction::NEW_BINARY:
-        $ACCESS_CONTROL->checkPermission(DAgentBinaryAction::NEW_BINARY_PERM);
-        $this->newBinary();
-        break;
-      case DAgentBinaryAction::EDIT_BINARY:
-        $ACCESS_CONTROL->checkPermission(DAgentBinaryAction::EDIT_BINARY_PERM);
-        $this->editBinary();
-        break;
-      case DAgentBinaryAction::DELETE_BINARY:
-        $ACCESS_CONTROL->checkPermission(DAgentBinaryAction::DELETE_BINARY_PERM);
-        $this->deleteBinary();
-        break;
-      default:
-        UI::addMessage(UI::ERROR, "Invalid action!");
-        break;
+    try {
+      switch ($action) {
+        case DAgentBinaryAction::NEW_BINARY:
+          AccessControl::getInstance()->checkPermission(DAgentBinaryAction::NEW_BINARY_PERM);
+          AgentBinaryUtils::newBinary($_POST['type'], $_POST['os'], $_POST['filename'], $_POST['version'], $_POST['updateTrack'], Login::getInstance()->getUser());
+          UI::addMessage(UI::SUCCESS, "Binary was added successfully!");
+          break;
+        case DAgentBinaryAction::EDIT_BINARY:
+          AccessControl::getInstance()->checkPermission(DAgentBinaryAction::EDIT_BINARY_PERM);
+          AgentBinaryUtils::editBinary($_POST['id'], $_POST['type'], $_POST['os'], $_POST['filename'], $_POST['version'], $_POST['updateTrack'], Login::getInstance()->getUser());
+          UI::addMessage(UI::SUCCESS, "Binary was updated successfully!");
+          break;
+        case DAgentBinaryAction::DELETE_BINARY:
+          AccessControl::getInstance()->checkPermission(DAgentBinaryAction::DELETE_BINARY_PERM);
+          AgentBinaryUtils::deleteBinary($_POST['id']);
+          UI::addMessage(UI::SUCCESS, "Binary deleted successfully!");
+          break;
+        case DAgentBinaryAction::CHECK_UPDATE:
+          AccessControl::getInstance()->checkPermission(DAgentBinaryAction::CHECK_UPDATE_PERM);
+          if(AgentBinaryUtils::checkUpdate($_POST['binaryId'])){
+            UI::addMessage(UI::SUCCESS, "New update is available!");
+          }
+          else{
+            UI::addMessage(UI::WARN, "No update available!");
+          }
+          break;
+        case DAgentBinaryAction::UPGRADE_BINARY:
+          AccessControl::getInstance()->checkPermission(DAgentBinaryAction::UPGRADE_BINARY_PERM);
+          AgentBinaryUtils::executeUpgrade($_POST['binaryId']);
+          UI::addMessage(UI::SUCCESS, "Agent binary was upgraded!");
+          break;
+        default:
+          UI::addMessage(UI::ERROR, "Invalid action!");
+          break;
+      }
     }
-  }
-  
-  private function deleteBinary() {
-    global $FACTORIES;
-    
-    $id = $_POST['id'];
-    $agentBinary = $FACTORIES::getAgentBinaryFactory()->get($id);
-    if ($agentBinary == null) {
-      UI::addMessage(UI::ERROR, "Binary does not exist!");
-      return;
+    catch (HTException $e) {
+      UI::addMessage(UI::ERROR, $e->getMessage());
     }
-    $FACTORIES::getAgentBinaryFactory()->delete($agentBinary);
-    unlink(dirname(__FILE__) . "/../../bin/" . $agentBinary->getFilename());
-    UI::addMessage(UI::SUCCESS, "Binary deleted successfully!");
-  }
-  
-  private function editBinary() {
-    /** @var $LOGIN Login */
-    global $FACTORIES, $LOGIN;
-    
-    $id = $_POST['id'];
-    $type = $_POST['type'];
-    $os = $_POST['os'];
-    $filename = $_POST['filename'];
-    $version = $_POST['version'];
-    if (strlen($version) == 0) {
-      UI::addMessage(UI::ERROR, "Version cannot be empty!");
-      return;
-    }
-    else if (!file_exists(dirname(__FILE__) . "/../../bin/$filename")) {
-      UI::addMessage(UI::ERROR, "Provided filename does not exist!");
-      return;
-    }
-    $agentBinary = $FACTORIES::getAgentBinaryFactory()->get($id);
-    if ($agentBinary == null) {
-      UI::addMessage(UI::ERROR, "Binary does not exist!");
-      return;
-    }
-    
-    $qF1 = new QueryFilter(AgentBinary::TYPE, $type, "=");
-    $qF2 = new QueryFilter(AgentBinary::AGENT_BINARY_ID, $agentBinary->getId(), "<>");
-    $result = $FACTORIES::getAgentBinaryFactory()->filter(array($FACTORIES::FILTER => array($qF1, $qF2)), true);
-    if ($result != null) {
-      UI::addMessage(UI::ERROR, "You cannot have two binaries with the same type!");
-      return;
-    }
-    
-    $agentBinary->setType($type);
-    $agentBinary->setOperatingSystems($os);
-    $agentBinary->setFilename($filename);
-    $agentBinary->setVersion($version);
-    
-    $FACTORIES::getAgentBinaryFactory()->update($agentBinary);
-    Util::createLogEntry(DLogEntryIssuer::USER, $LOGIN->getUserID(), DLogEntry::INFO, "Binary " . $agentBinary->getFilename() . " was updated!");
-    UI::addMessage(UI::SUCCESS, "Binary was updated successfully!");
-  }
-  
-  private function newBinary() {
-    /** @var $LOGIN Login */
-    global $FACTORIES, $LOGIN;
-    
-    $type = $_POST['type'];
-    $os = $_POST['os'];
-    $filename = $_POST['filename'];
-    $version = $_POST['version'];
-    if (strlen($version) == 0) {
-      UI::addMessage(UI::ERROR, "Version cannot be empty!");
-      return;
-    }
-    else if (!file_exists(dirname(__FILE__) . "/../../bin/$filename")) {
-      UI::addMessage(UI::ERROR, "Provided filename does not exist!");
-      return;
-    }
-    $qF = new QueryFilter(AgentBinary::TYPE, $type, "=");
-    $result = $FACTORIES::getAgentBinaryFactory()->filter(array($FACTORIES::FILTER => $qF), true);
-    if ($result != null) {
-      UI::addMessage(UI::ERROR, "You cannot have two binaries with the same type!");
-      return;
-    }
-    $agentBinary = new AgentBinary(0, $type, $version, $os, $filename);
-    $FACTORIES::getAgentBinaryFactory()->save($agentBinary);
-    Util::createLogEntry(DLogEntryIssuer::USER, $LOGIN->getUserID(), DLogEntry::INFO, "New Binary " . $agentBinary->getFilename() . " was added!");
-    UI::addMessage(UI::SUCCESS, "Binary was added successfully!");
   }
 }

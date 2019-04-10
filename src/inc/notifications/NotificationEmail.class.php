@@ -20,5 +20,4 @@ class HashtopolisNotificationEmail extends HashtopolisNotification {
   }
 }
 
-$NOTIFICATIONS['Email'] = new HashtopolisNotificationEmail();
-
+HashtopolisNotification::add('Email', new HashtopolisNotificationEmail());

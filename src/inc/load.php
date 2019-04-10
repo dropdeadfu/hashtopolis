@@ -1,25 +1,16 @@
 <?php
-
 use DBA\Factory;
+use DBA\StoredValue;
 
 // set to 1 for debugging
 ini_set("display_errors", "0");
 
 session_start();
 
-$OBJECTS = array();
+require_once(dirname(__FILE__) . "/info.php");
 
-$VERSION = "0.6.0";
-$HOST = @$_SERVER['HTTP_HOST'];
-if (strpos($HOST, ":") !== false) {
-  $HOST = substr($HOST, 0, strpos($HOST, ":"));
-}
-
-$OBJECTS['version'] = $VERSION;
-$OBJECTS['host'] = $HOST;
-
-$INSTALL = true;
-@include(dirname(__FILE__) . "/db.php");
+$INSTALL = false;
+@include(dirname(__FILE__) . "/conf.php");
 
 // include all .class.php files in inc dir
 $dir = scandir(dirname(__FILE__));
@@ -32,10 +23,11 @@ require_once(dirname(__FILE__) . "/templating/Statement.class.php");
 require_once(dirname(__FILE__) . "/templating/Template.class.php");
 
 // include all required files
-$NOTIFICATIONS = array();
 require_once(dirname(__FILE__) . "/handlers/Handler.class.php");
 require_once(dirname(__FILE__) . "/notifications/Notification.class.php");
-$directories = array('handlers', 'api', 'defines', 'utils', 'notifications');
+require_once(dirname(__FILE__) . "/api/APIBasic.class.php");
+require_once(dirname(__FILE__) . "/user-api/UserAPIBasic.class.php");
+$directories = array('handlers', 'api', 'defines', 'utils', 'notifications', 'user-api');
 foreach ($directories as $directory) {
   $dir = scandir(dirname(__FILE__) . "/$directory/");
   foreach ($dir as $entry) {
@@ -50,46 +42,60 @@ include(dirname(__FILE__) . "/protocol.php");
 // include DBA
 require_once(dirname(__FILE__) . "/../dba/init.php");
 
-$FACTORIES = new Factory();
 $LANG = new Lang();
+UI::add('version', $VERSION);
+UI::add('host', $HOST);
+UI::add('gitcommit', Util::getGitCommit());
+UI::add('build', '');
 
-$gitcommit = "";
-$gitfolder = dirname(__FILE__) . "/../../.git";
-if (file_exists($gitfolder) && is_dir($gitfolder)) {
-  $head = file_get_contents($gitfolder . "/HEAD");
-  $branch = trim(substr($head, strlen("ref: refs/heads/"), -1));
-  $commit = trim(file_get_contents($gitfolder . "/refs/heads/" . $branch));
-  $gitcommit = "commit " . substr($commit, 0, 7) . " branch $branch";
+$updateExecuted = false;
+if($INSTALL){
+  // check if update is needed 
+  // (note if the version was retrieved with git, but the git folder was removed, smaller updates are not recognized because the build value is missing)
+  $storedVersion = Factory::getStoredValueFactory()->get("version");
+  if($storedVersion == null || $storedVersion->getVal() != explode("+", $VERSION)[0] && file_exists(dirname(__FILE__) . "/../install/updates/update.php")){
+    include(dirname(__FILE__) . "/../install/updates/update.php");
+    $updateExecuted = $upgradePossible;
+  }
+  else{ // in case it is not a version upgrade, but the person retrieved a new version via git or copying
+    $storedBuild = Factory::getStoredValueFactory()->get("build");
+    if($storedBuild == null || ($BUILD != 'repository' && $storedBuild->getVal() != $BUILD) || ($BUILD == 'repository' && strlen(Util::getGitCommit(true)) > 0 && $storedBuild->getVal() != Util::getGitCommit(true)) && file_exists(dirname(__FILE__) . "/../install/updates/update.php")){
+      include(dirname(__FILE__) . "/../install/updates/update.php");
+      $updateExecuted = $upgradePossible;
+    }
+  }
+
+  if(strlen(Util::getGitCommit()) == 0){
+    $storedBuild = Factory::getStoredValueFactory()->get("build");
+    if($storedBuild != null){
+      UI::add('build', $storedBuild->getVal());
+    }
+  }
 }
-$OBJECTS['gitcommit'] = $gitcommit;
 
-$LOGIN = null;
-$MENU = new Menu();
-$OBJECTS['menu'] = $MENU;
-$OBJECTS['messages'] = array();
-$OBJECTS['pageTitle'] = "";
-$ACCESS_CONTROL = new AccessControl();
+UI::add('menu', Menu::get());
+UI::add('messages', []);
+
+if($updateExecuted){
+  UI::addMessage(UI::SUCCESS, "An automatic upgrade was executed! " . sizeof($EXECUTED) . " changes applied on DB!");
+}
+
+UI::add('pageTitle', "");
 if ($INSTALL) {
-  $LOGIN = new Login();
-  $OBJECTS['login'] = $LOGIN;
-  if ($LOGIN->isLoggedin()) {
-    $OBJECTS['user'] = $LOGIN->getUser();
-    $ACCESS_CONTROL = new AccessControl($LOGIN->getUser());
+  UI::add('login', Login::getInstance());
+  if (Login::getInstance()->isLoggedin()) {
+    UI::add('user', Login::getInstance()->getUser());
+    AccessControl::getInstance(Login::getInstance()->getUser());
   }
   
-  $res = $FACTORIES::getConfigFactory()->filter(array());
-  $CONFIG = new DataSet();
-  foreach ($res as $entry) {
-    $CONFIG->addValue($entry->getItem(), $entry->getValue());
-  }
-  $OBJECTS['config'] = $CONFIG;
+  UI::add('config', SConfig::getInstance());
   
-  define("APP_NAME", ($CONFIG->getVal(DConfig::S_NAME) == 1) ? "Hashtopussy" : "Hashtopolis");
+  define("APP_NAME", (SConfig::getInstance()->getVal(DConfig::S_NAME) == 1) ? "Hashtopussy" : "Hashtopolis");
   
   //set autorefresh to false for all pages
-  $OBJECTS['autorefresh'] = -1;
+  UI::add('autorefresh', -1);
 }
-$OBJECTS['accessControl'] = $ACCESS_CONTROL;
+UI::add('accessControl', AccessControl::getInstance());
 
 // CSRF setup
 CSRF::init();

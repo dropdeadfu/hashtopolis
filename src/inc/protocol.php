@@ -31,6 +31,15 @@ class PQueryLogin extends PQuery {
   const CLIENT_SIGNATURE = "clientSignature";
 }
 
+class PQueryGetFileStatus extends PQuery {
+  static function isValid($QUERY) {
+    if (!isset($QUERY[self::TOKEN])) {
+      return false;
+    }
+    return true;
+  }
+}
+
 class PQuerySendProgress extends PQuery {
   static function isValid($QUERY) {
     if (!isset($QUERY[self::TOKEN]) || !isset($QUERY[self::CHUNK_ID]) || !isset($QUERY[self::KEYSPACE_PROGRESS]) || !isset($QUERY[self::KEYSPACE_PROGRESS]) || !isset($QUERY[self::RELATIVE_PROGRESS]) || !isset($QUERY[self::SPEED]) || !isset($QUERY[self::HASHCAT_STATE]) || !isset($QUERY[self::CRACKED_HASHES])) {
@@ -45,6 +54,11 @@ class PQuerySendProgress extends PQuery {
   const SPEED             = "speed";
   const HASHCAT_STATE     = "state";
   const CRACKED_HASHES    = "cracks";
+  
+  // optional
+  const DEBUG_OUTPUT = "debugOutput";
+  const GPU_TEMP     = "gpuTemp";
+  const GPU_UTIL     = "gpuUtil";
 }
 
 class PQuerySendBenchmark extends PQuery {
@@ -92,6 +106,40 @@ class PQueryGetTask extends PQuery {
   }
 }
 
+class PQueryGetHealthCheck extends PQuery {
+  static function isValid($QUERY) {
+    if (!isset($QUERY[self::TOKEN])) {
+      return false;
+    }
+    return true;
+  }
+}
+
+class PQueryDeRegister extends PQuery {
+  static function isValid($QUERY) {
+    if (!isset($QUERY[self::TOKEN])) {
+      return false;
+    }
+    return true;
+  }
+}
+
+class PQuerySendHealthCheck extends PQuery {
+  static function isValid($QUERY) {
+    if (!isset($QUERY[self::TOKEN]) || !isset($QUERY[self::CHECK_ID]) || !isset($QUERY[self::NUM_CRACKED]) || !isset($QUERY[self::START]) || !isset($QUERY[self::END]) || !isset($QUERY[self::NUM_GPUS]) || !isset($QUERY[self::ERRORS])) {
+      return false;
+    }
+    return true;
+  }
+  
+  const CHECK_ID    = "checkId";
+  const NUM_CRACKED = "numCracked";
+  const START       = "start";
+  const END         = "end";
+  const NUM_GPUS    = "numGpus";
+  const ERRORS      = "errors";
+}
+
 class PQueryGetHashlist extends PQuery {
   static function isValid($QUERY) {
     if (!isset($QUERY[self::TOKEN]) || !isset($QUERY[self::HASHLIST_ID])) {
@@ -115,6 +163,17 @@ class PQueryGetFile extends PQuery {
   const FILENAME = "file";
 }
 
+class PQueryGetFound extends PQuery {
+  static function isValid($QUERY) {
+    if (!isset($QUERY[self::TOKEN]) || !isset($QUERY[self::HASHLIST_ID])) {
+      return false;
+    }
+    return true;
+  }
+  
+  const HASHLIST_ID  = "hashlistId";
+}
+
 class PQueryClientError extends PQuery {
   static function isValid($QUERY) {
     if (!isset($QUERY[self::TOKEN]) || !isset($QUERY[self::TASK_ID]) || !isset($QUERY[self::MESSAGE])) {
@@ -123,8 +182,9 @@ class PQueryClientError extends PQuery {
     return true;
   }
   
-  const TASK_ID = "taskId";
-  const MESSAGE = "message";
+  const TASK_ID  = "taskId";
+  const MESSAGE  = "message";
+  const CHUNK_ID = "chunkId";
 }
 
 class PQueryDownloadBinary extends PQuery {
@@ -187,9 +247,15 @@ abstract class PValues {
   const ERROR   = "ERROR";
 }
 
+class PValuesTask extends PValues {
+  const HEALTH_CHECK = -1;
+}
+
 class PValuesDownloadBinaryType extends PValues {
   const EXTRACTOR = "7zr";
   const CRACKER   = "cracker";
+  const PRINCE    = "prince";
+  const UFTPD     = "uftpd";
 }
 
 class PValuesBenchmarkType extends PValues {
@@ -212,6 +278,7 @@ class PValuesChunkType extends PValues {
   const BENCHMARK_REQUIRED = "benchmark";
   const FULLY_DISPATCHED   = "fully_dispatched";
   const CRACKER_UPDATE     = "cracker_update";
+  const HEALTH_CHECK       = "health_check";
   const OK                 = "OK";
 }
 
@@ -222,6 +289,18 @@ class PValuesChunkType extends PValues {
 abstract class PResponse {
   const ACTION   = "action";
   const RESPONSE = "response";
+}
+
+class PResponseGetFileStatus extends PResponse {
+  const FILENAMES = "filenames";
+}
+
+class PResponseGetHealthCheck extends PResponse {
+  const ATTACK            = "attack";
+  const CRACKER_BINARY_ID = "crackerBinaryId";
+  const HASHES            = "hashes";
+  const CHECK_ID          = "checkId";
+  const HASHLIST_ALIAS    = "hashlistAlias";
 }
 
 class PResponseErrorMessage extends PResponse {
@@ -237,7 +316,9 @@ class PResponseGetHashlist extends PResponse {
 }
 
 class PResponseLogin extends PResponse {
-  const TIMEOUT = "timeout";
+  const TIMEOUT   = "timeout";
+  const MULTICAST = "multicastEnabled";
+  const VERSION   = "server-version";
 }
 
 class PResponseClientUpdate extends PResponse {
@@ -255,10 +336,19 @@ class PResponseError extends PResponse {
   // not additional values required
 }
 
+class PResponseSendHealthCheck extends PResponse {
+  // not additional values required
+}
+
+class PResponseDeRegister extends PResponse {
+  // not additional values required
+}
+
 class PResponseGetFile extends PResponse {
   const FILENAME  = "filename";
   const EXTENSION = "extension";
   const URL       = "url";
+  const FILESIZE  = "filesize";
 }
 
 class PResponseGetTask extends PResponse {
@@ -274,6 +364,14 @@ class PResponseGetTask extends PResponse {
   const HASHLIST_ALIAS = "hashlistAlias";
   const KEYSPACE       = "keyspace";
   const REASON         = "reason";
+  const PRINCE         = "usePrince";
+  const ENFORCE_PIPE   = "enforcePipe";
+  const SLOW_HASH      = "slowHash";
+  const USE_BRAIN      = "useBrain";
+  const BRAIN_HOST     = "brainHost";
+  const BRAIN_PORT     = "brainPort";
+  const BRAIN_PASS     = "brainPass";
+  const BRAIN_FEATURES = "brainFeatures";
 }
 
 class PResponseGetChunk extends PResponse {
@@ -298,6 +396,10 @@ class PResponseSendProgress extends PResponse {
   const HASH_ZAPS     = "zaps";
 }
 
+class PResponseGetFound extends PResponse {
+  const URL = "url";
+}
+
 ######################
 # Action definitions #
 ######################
@@ -317,4 +419,9 @@ class PActions {
   const SEND_BENCHMARK            = "sendBenchmark";
   const SEND_PROGRESS             = "sendProgress";
   const TEST_CONNECTION           = "testConnection";
+  const GET_FILE_STATUS           = "getFileStatus";
+  const GET_HEALTH_CHECK          = "getHealthCheck";
+  const SEND_HEALTH_CHECK         = "sendHealthCheck";
+  const GET_FOUND                 = "getFound";
+  const DEREGISTER                = "deregister";
 }

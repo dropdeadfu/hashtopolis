@@ -1,6 +1,6 @@
-{{FOREACH subTask;[[set.getVal('subtaskList')]]}}
+{{FOREACH subTask;[[subtaskList]]}}
   <tr>
-    <td{{IF [[strlen([[subTask.getVal('color')]])]] > 0}} style="background-color: #[[subTask.getVal('color')]]"{{ENDIF}}>
+    <td {{IF [[subTask.getVal('sumProgress')]] < [[subTask.getVal('keyspace')]]}}rel="popover" data-img="api/taskimg.php?task=[[subTask.getVal('taskId')]]&x=1200&y=6"{{ENDIF}}{{IF [[strlen([[subTask.getVal('color')]])]] > 0}} style="background-color: #[[subTask.getVal('color')]]"{{ENDIF}}>
       {{IF [[accessControl.hasPermission([[$DAccessControl::VIEW_TASK_ACCESS]])]]}}
         <a href="tasks.php?id=[[subTask.getVal('taskId')]]">[[subTask.getVal('taskId')]]</a>
       {{ELSE}}
@@ -23,32 +23,36 @@
       {{IF [[subTask.getVal('isSmall')]] == 1}}
         <br>Small Task
       {{ENDIF}}
+      {{IF [[subTask.getVal('isPrince')]] == 1}}
+        <br>PRINCE
+      {{ENDIF}}
     </td>
-    <td class="num">[[subTask.getVal('numChunks')]]@[[subTask.getVal('chunkTime')]]s</td>
     {{IF [[subTask.getVal('keyspace')]] > 0}}
       <td class='num'>
-        [[Util::showperc([[subTask.getVal('taskProgress')]], [[subTask.getVal('keyspace')]])]]%
-      </td>
-      <td class='num'>
+        [[Util::showperc([[subTask.getVal('taskProgress')]], [[subTask.getVal('keyspace')]])]]% /
         [[Util::showperc([[subTask.getVal('sumProgress')]], [[subTask.getVal('keyspace')]])]]%
       </td>
     {{ELSE}}
-      <td colspan='2'>Keyspace unknown</td>
+      <td>&nbsp;</td>
     {{ENDIF}}
     <td class='num' style="min-width: 50px;">
       {{IF [[subTask.getVal('cracked')]] > 0 && [[accessControl.hasPermission([[$DAccessControl::VIEW_HASHES_ACCESS]])]]}}
-        <a href="hashes.php?task=[[subTask.getVal('taskId')]]&filter=cracked">[[subTask.getVal('cracked')]] ([[subTask.getVal('performance')]]c/m)</a>
+        <a href="hashes.php?task=[[subTask.getVal('taskId')]]&filter=cracked">[[subTask.getVal('cracked')]] {{IF [[config.getVal([[$DConfig::SHOW_TASK_PERFORMANCE]])]] == 1}}([[subTask.getVal('performance')]]c/m){{ENDIF}}</a>
       {{ENDIF}}
       {{IF [[subTask.getVal('cracked')]] > 0 && ![[accessControl.hasPermission([[$DAccessControl::VIEW_HASHES_ACCESS]])]]}}
-        [[subTask.getVal('cracked')]] ([[subTask.getVal('performance')]]c/m)
+        [[subTask.getVal('cracked')]] {{IF [[config.getVal([[$DConfig::SHOW_TASK_PERFORMANCE]])]] == 1}}([[subTask.getVal('performance')]]c/m){{ENDIF}}
       {{ENDIF}}
     </td>
     <td class='num' style="min-width: 50px;">
       {{IF [[subTask.getVal('numAssignments')]] > 0}}
         [[subTask.getVal('numAssignments')]]
+        {{IF [[subTask.getVal('isActive')]]}}  
+          <br>
+          @[[Util::nicenum([[subTask.getVal('speed')]], 10000, 1000)]]H/s
+        {{ENDIF}}
       {{ENDIF}}
     </td>
-    <td style='min-width: 95px'>
+    <td style='min-width: 95px' data-sort="[[subTask.getVal('filesSize')]]">
       {{IF [[subTask.getVal('numFiles')]] > 0}}
         [[subTask.getVal('numFiles')]]
       {{ENDIF}}
@@ -59,14 +63,14 @@
         <br>([[Util::nicenum([[subTask.getVal('filesSize')]])]]B)
       {{ENDIF}}
     </td>
-    <td style='min-width: 130px'>
+    <td style='min-width: 130px' data-sort="[[subTask.getVal('priority')]]">
       {{IF [[accessControl.hasPermission([[$DAccessControl::MANAGE_TASK_ACCESS]])]]}}
         <form class="form-inline" action="tasks.php" method="POST">
           <input type='hidden' name='action' value='[[$DTaskAction::SET_PRIORITY]]'>
           <input type="hidden" name="task" value="[[subTask.getVal('taskId')]]">
           <input type="hidden" name="csrf" value="[[csrf]]">
-          <input type="text" class='form-control' style='width: 60px;' name="priority" size="4" value="[[subTask.getVal('priority')]]" title="Priority">&nbsp;&nbsp;
-          <input type="submit" class='btn btn-light' value="Set">
+          <input type="text" class='form-control' style='width: 60px;' name="priority" size="4" value="[[subTask.getVal('priority')]]" title="Priority">
+          <button type="submit" class='btn btn-light mx-1' data-toggle="tooltip" data-placement="top" title="Set"><i class="fas fa-save" aria-hidden="true"></i></button>
         </form>
       {{ELSE}}
         [[subTask.getVal('priority')]]
@@ -74,23 +78,29 @@
     </td>
     <td style='min-width: 120px'>
       {{IF [[accessControl.hasPermission([[$DAccessControl::CREATE_TASK_ACCESS]])]]}}
-        <form style ='float: left; padding-right: 5px;' action="tasks.php?new=true&copy=[[subTask.getVal('taskId')]]" method="post">
-          <input type="submit" class='btn btn-light' value="Copy">
-        </form>
-        <form style ='float: left;' action="tasks.php" method="POST" onSubmit="if (!confirm('Really delete task [[subTask.getVal('taskId')]]?')) return false;">
+        <form class="float-right mx-1" action="tasks.php" method="POST" onSubmit="if (!confirm('Really delete task [[subTask.getVal('taskId')]]?')) return false;">
           <input type="hidden" name="action" value="[[$DTaskAction::DELETE_TASK]]">
           <input type="hidden" name="csrf" value="[[csrf]]">
           <input type="hidden" name="task" value="[[subTask.getVal('taskId')]]">
-          <input type="submit" class='btn btn-danger' value="X">
+          <button type="submit" class='btn btn-danger' data-toggle="tooltip" data-placement="top" title="Delete"><i class="fas fa-trash" aria-hidden="true"></i></button>
         </form>
+        {{IF ![[showArchived]]}}
+          <form class="float-right mx-1" action="tasks.php" method="POST" onSubmit="if (!confirm('Really archive task [[subTask.getVal('taskId')]]?')) return false;">
+            <input type="hidden" name="action" value="[[$DTaskAction::ARCHIVE_TASK]]">
+            <input type="hidden" name="task" value="[[subTask.getVal('taskId')]]">
+            <input type="hidden" name="csrf" value="[[csrf]]">
+            <button type="submit" class='btn btn-warning' data-toggle="tooltip" data-placement="top" title="Archive Task"><i class="fas fa-archive" aria-hidden="true"></i></button>
+          </form>
+        {{ENDIF}}
+        <form class="float-right mx-1" action="tasks.php?new=true&copy=[[subTask.getVal('taskId')]]" method="post">
+          <button type="submit" class='btn btn-light' data-toggle="tooltip" data-placement="top" title="Copy to Task"><i class="fas fa-copy" aria-hidden="true"></i></button>
+        </form>
+        {{IF [[accessControl.hasPermission([[$DAccessControl::CREATE_PRETASK_ACCESS]])]]}}
+				  <form class="float-right mx-1" action="pretasks.php?new=true&copyTask=[[subTask.getVal('taskId')]]" method="POST">
+            <button type="submit" class='btn btn-light' data-toggle="tooltip" data-placement="top" title="Copy to Pretask"><i class="fas fa-bookmark" aria-hidden="true"></i></button>
+				  </form>
+			  {{ENDIF}}
       {{ENDIF}}
     </td>
   </tr>
-  {{IF [[subTask.getVal('sumProgress')]] < [[subTask.getVal('keyspace')]]}}
-    <tr>
-      <td colspan="11" style="padding: 0px 1px;">
-        <img style="width: 100%; height: 6px; padding: 0px;" src="api/taskimg.php?task=[[subTask.getVal('taskId')]]&x=1200&y=6">
-      </td>
-    </tr>
-  {{ENDIF}}
 {{ENDFOREACH}}

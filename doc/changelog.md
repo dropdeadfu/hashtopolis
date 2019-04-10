@@ -1,3 +1,133 @@
+# v0.10.1 -> v0.x.x
+
+## Bugfixes
+
+- Fixed wrong task speed summation for task overview page.
+- Fixed XSS on hashes view page when printing a hashlist.
+- Fixed missing check for blacklisted characters when editing task.
+
+# v0.10.0 -> v0.10.1
+
+## Bugfixes
+
+- Fixed createHashlist API call with wrong brain parameter conversion.
+- Fixed createUser API call with wrong amount of parameters.
+- Fixed applying supertasks directly from hashlist view.
+- Fixed wrong saving of build number if it didn't exist.
+
+# v0.9.0 -> v0.10.0
+
+## Features
+
+- Integration of Hashcat Brain feature.
+- Speed data is kept and can be shown in graphs for tasks.
+- Agents can automatically de-register if allowed on the server.
+- Agent updates can now automatically be retrieved, based on selected update track.
+- Update scripts in the future can be handled differently. Applying updates is easier as there is a build number.
+
+## Bugfixes
+
+- Fixed wrong percentage in case of big tasks where percentage was close to 0.
+- Rule splitting can only happen if at least two subparts get created afterwards.
+- Fixed filesize calculation for temporary files after rule splitting.
+
+## Enhancements
+
+- In case of client errors the corresponding chunk now also is saved if available.
+- Make more clear naming on rule splitting tasks, rules have an empty line at the end to increase readability.
+
+# v0.8.0 -> v0.9.0
+
+## Features
+
+- The server saves the crackpos for hash founds given by hashcat.
+- Trimming of chunks can be disabled so a chunk is always run fully again (or splitted if it is too large).
+- Supertasks can now can be created by specifying a base command and iterate over a selection of files to be placed in the command.
+- Notes can be added to hashlists.
+- Added optional trace logging of actions from the client API to get more information in case of failures.
+- Slow hashes are marked, so the client can decide if piping could make sense for this hash type.
+- Agents can run health checks to determine if all agents are running correctly.
+
+## Bugfixes
+
+- Fixed GPU data graph when having multiple agents.
+- Fixed assignment issue with subtasks of supertasks if they were in the same supertask.
+- Fixed that cracker types cannot be deleted when there are supertasks using this type.
+
+## Enhancements
+
+- Telegram notifications can now completely be configured via server config and also can be used through proxies.
+- Peppers of Encryption.class.php and CSRF.class.php were moved out of the files to make updating easier.
+- When importing supertasks it can be selected if they should use the optimized flag and which benchmark type should be used.
+- Subtasks are only loaded when being viewed to speed up loading of the tasks page.
+- Changed type of the hash column to TEXT to make sure to handle all the long hashes. It should not affect speed as long as there is not a multi-million hashlist.
+- Preconfigured task attack commands can be edited after creation.
+- If needed it can be set that the server should also distribute tasks with priority 0.
+
+# v0.7.1 -> v0.8.0
+
+## Features
+
+- The server can store sent debug output from Hashcat sent by the agent.
+- Files now also are associated to an Access Group to control the visibility of files.
+- Agent data about device temperature and util is collected and can be viewed on the server.
+- Notes can be added to tasks.
+- Static chunking (if for some reasone a fixed number of chunks or static chunk size should be used for a task)
+- The server can provide a list of deleted filenames to the agent when he asks for.
+- Tasks can now be copied to preconfigured tasks and preconfigured tasks can also be copied to preconfigured tasks.
+- A test framework was added to run automated tests on Travis.
+- To make sure rules are applied before rejecting, piping can be enforced.
+- Added Notification type for Slack.
+
+## Enhancements
+
+- Task attack commands can be changed after creation, e.g. to fix typos
+- Switch between tasks and archived ones is easier
+- Archived tasks can be deleted at once
+- Task priority can now be set directly in the task creation form.
+
+## Bugfixes
+
+- New task creation page now also shows the other file type.
+- New file creation with the user API now takes the right file type.
+- Vouchers are tested for uniqueness on creation to avoid duplicated ones.
+- Disabling rule splitting when having a prince task.
+- Fixed non-working secret checkbox for hashlists.
+
+# v0.7.0 -> v0.7.1
+
+## Bugfixes
+
+- Fixed permission check for file downloads with URLs from the user API
+- Fixed issue with creating supertasks from preconfigured task list
+- Fixed creation of tasks from preconfigured tasks out of the hashlist view
+- Fixed mask import
+- Fixed hiding of mask imports in preconfigured task list on hashlist page
+
+# v0.6.0 -> v0.7.0
+
+## Features
+
+- Tasks which are recognized containing large rule files and not giving good benchmarks result in splitting into subtasks
+- Most of the tables can now be easily ordered and searched with the datatables plugin
+- Agent Errors can be handled better
+- New User API allowing access to all functions without the webinterface via simple JSON commands.
+- Added new filetype (Other) for all non rules/wordlist files like hashcat charsets etc.
+- File types can be edited of existing files.
+- Tasks can now be archived instead of being deleted.
+
+## Enhancements
+
+- Width of the container is increased to have more space on large screens.
+- Standard buttons have now icons instead of text to use less space.
+- Hashcat is configured already as crack to make it easier for users to get started.
+
+## Bugfixes
+
+- Using correct function to get superhashlistId on zapping from webinterface.
+- Zapping from the website will now also issue zaps for non-salted hashlists.
+- Fixed zapping querying on progress sending from agent to also match for agent null values.
+
 # v0.5.1 -> v0.6.0
 
 ## Features

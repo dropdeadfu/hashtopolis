@@ -1,26 +1,48 @@
 <?php
 
 use DBA\User;
-use DBA\RightGroup;
+use DBA\Factory;
 
 class AccessControl {
   private $user;
   private $rightGroup;
+  
+  private static $instance = null;
+  
+  /**
+   * @param User $user 
+   * @param int $groupId 
+   * @return AccessControl
+   */
+  public static function getInstance($user = null, $groupId = 0) {
+    if ($user != null || $groupId != 0) {
+      self::$instance = new AccessControl($user, $groupId);
+    }
+    else if (self::$instance == null) {
+      self::$instance = new AccessControl();
+    }
+    return self::$instance;
+  }
+  
+  /**
+   * @return User
+   */
+  public function getUser() {
+    return $this->user;
+  }
   
   /**
    * AccessControl constructor.
    * @param $user User
    * @param $groupId int
    */
-  public function __construct($user = null, $groupId = 0) {
-    global $FACTORIES;
-    
+  private function __construct($user = null, $groupId = 0) {
     $this->user = $user;
     if ($this->user != null) {
-      $this->rightGroup = $FACTORIES::getRightGroupFactory()->get($this->user->getRightGroupId());
+      $this->rightGroup = Factory::getRightGroupFactory()->get($this->user->getRightGroupId());
     }
     else if ($groupId != 0) {
-      $this->rightGroup = $FACTORIES::getRightGroupFactory()->get($groupId);
+      $this->rightGroup = Factory::getRightGroupFactory()->get($groupId);
     }
   }
   
@@ -28,10 +50,8 @@ class AccessControl {
    * Force a reload of the permissions from the database
    */
   public function reload() {
-    global $FACTORIES;
-    
     if ($this->user != null) {
-      $this->rightGroup = $FACTORIES::getRightGroupFactory()->get($this->user->getRightGroupId());
+      $this->rightGroup = Factory::getRightGroupFactory()->get($this->user->getRightGroupId());
     }
   }
   
@@ -47,6 +67,7 @@ class AccessControl {
   
   /**
    * @param $singlePerm string
+   * @return bool
    */
   public function givenByDependency($singlePerm) {
     $constants = DAccessControl::getConstants();
@@ -66,13 +87,10 @@ class AccessControl {
    * @return bool true if access is granted
    */
   public function hasPermission($perm) {
-    /** @var $LOGIN Login */
-    global $LOGIN;
-    
     if ($perm == DAccessControl::PUBLIC_ACCESS) {
       return true;
     }
-    else if ($perm == DAccessControl::LOGIN_ACCESS && $LOGIN->isLoggedin()) {
+    else if ($perm == DAccessControl::LOGIN_ACCESS && Login::getInstance()->isLoggedin()) {
       return true;
     }
     else if ($this->rightGroup == null) {

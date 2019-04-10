@@ -4,41 +4,43 @@ use DBA\Assignment;
 use DBA\File;
 use DBA\FileTask;
 use DBA\QueryFilter;
+use DBA\Factory;
 
 class APIGetFile extends APIBasic {
   public function execute($QUERY = array()) {
-    global $FACTORIES;
-    
     //check required values
     if (!PQueryGetFile::isValid($QUERY)) {
       $this->sendErrorResponse(PActions::GET_FILE, "Invalid file query!");
     }
     $this->checkToken(PActions::GET_FILE, $QUERY);
     
+    DServerLog::log(DServerLog::DEBUG, "Requesting file " . $QUERY[PQueryGetFile::FILENAME], [$this->agent]);
+    
     // let agent download adjacent files
-    $task = $FACTORIES::getTaskFactory()->get($QUERY[PQueryGetFile::TASK_ID]);
+    $task = Factory::getTaskFactory()->get($QUERY[PQueryGetFile::TASK_ID]);
     if ($task == null) {
       $this->sendErrorResponse(PActions::GET_FILE, "Invalid task!");
     }
     
     $qF1 = new QueryFilter(Assignment::TASK_ID, $task->getId(), "=");
     $qF2 = new QueryFilter(Assignment::AGENT_ID, $this->agent->getId(), "=");
-    $assignment = $FACTORIES::getAssignmentFactory()->filter(array($FACTORIES::FILTER => array($qF1, $qF2)), true);
+    $assignment = Factory::getAssignmentFactory()->filter([Factory::FILTER => [$qF1, $qF2]], true);
     if ($assignment == null) {
       $this->sendErrorResponse(PActions::GET_FILE, "Client is not assigned to this task!");
     }
     
     $file = $QUERY[PQueryGetFile::FILENAME];
     $qF = new QueryFilter(File::FILENAME, $file, "=");
-    $file = $FACTORIES::getFileFactory()->filter(array($FACTORIES::FILTER => $qF), true);
+    $file = Factory::getFileFactory()->filter([Factory::FILTER => $qF], true);
     if ($file == null) {
       $this->sendErrorResponse(PActions::GET_FILE, "Invalid file!");
     }
     
     $qF1 = new QueryFilter(FileTask::TASK_ID, $task->getId(), "=");
     $qF2 = new QueryFilter(FileTask::FILE_ID, $file->getId(), "=");
-    $taskFile = $FACTORIES::getFileTaskFactory()->filter(array($FACTORIES::FILTER => array($qF1, $qF2)), true);
+    $taskFile = Factory::getFileTaskFactory()->filter([Factory::FILTER => [$qF1, $qF2]], true);
     if ($taskFile == null) {
+      DServerLog::log(DServerLog::WARNING, "Agent requested file not used in the task!", [$this->agent, $file, $task]);
       $this->sendErrorResponse(PActions::GET_FILE, "This file is not used for the specified task!");
     }
     
@@ -55,7 +57,8 @@ class APIGetFile extends APIBasic {
         PResponseGetFile::FILENAME => $filename,
         PResponseGetFile::EXTENSION => $extension,
         PResponseGetFile::RESPONSE => PValues::SUCCESS,
-        PResponseGetFile::URL => "getFile.php?file=" . $file->getId() . "&token=" . $this->agent->getToken()
+        PResponseGetFile::URL => "getFile.php?file=" . $file->getId() . "&token=" . $this->agent->getToken(),
+        PResponseGetFile::FILESIZE => (int)$file->getSize()
       )
     );
   }

@@ -29,9 +29,17 @@ class Factory {
   private static $storedValueFactory = null;
   private static $supertaskFactory = null;
   private static $taskFactory = null;
+  private static $taskDebugOutputFactory = null;
   private static $taskWrapperFactory = null;
   private static $userFactory = null;
   private static $zapFactory = null;
+  private static $apiKeyFactory = null;
+  private static $apiGroupFactory = null;
+  private static $fileDownloadFactory = null;
+  private static $fileDeleteFactory = null;
+  private static $healthCheckFactory = null;
+  private static $healthCheckAgentFactory = null;
+  private static $speedFactory = null;
   private static $accessGroupUserFactory = null;
   private static $accessGroupAgentFactory = null;
   private static $fileTaskFactory = null;
@@ -299,6 +307,16 @@ class Factory {
     }
   }
   
+  public static function getTaskDebugOutputFactory() {
+    if (self::$taskDebugOutputFactory == null) {
+      $f = new TaskDebugOutputFactory();
+      self::$taskDebugOutputFactory = $f;
+      return $f;
+    } else {
+      return self::$taskDebugOutputFactory;
+    }
+  }
+  
   public static function getTaskWrapperFactory() {
     if (self::$taskWrapperFactory == null) {
       $f = new TaskWrapperFactory();
@@ -326,6 +344,76 @@ class Factory {
       return $f;
     } else {
       return self::$zapFactory;
+    }
+  }
+  
+  public static function getApiKeyFactory() {
+    if (self::$apiKeyFactory == null) {
+      $f = new ApiKeyFactory();
+      self::$apiKeyFactory = $f;
+      return $f;
+    } else {
+      return self::$apiKeyFactory;
+    }
+  }
+  
+  public static function getApiGroupFactory() {
+    if (self::$apiGroupFactory == null) {
+      $f = new ApiGroupFactory();
+      self::$apiGroupFactory = $f;
+      return $f;
+    } else {
+      return self::$apiGroupFactory;
+    }
+  }
+  
+  public static function getFileDownloadFactory() {
+    if (self::$fileDownloadFactory == null) {
+      $f = new FileDownloadFactory();
+      self::$fileDownloadFactory = $f;
+      return $f;
+    } else {
+      return self::$fileDownloadFactory;
+    }
+  }
+  
+  public static function getFileDeleteFactory() {
+    if (self::$fileDeleteFactory == null) {
+      $f = new FileDeleteFactory();
+      self::$fileDeleteFactory = $f;
+      return $f;
+    } else {
+      return self::$fileDeleteFactory;
+    }
+  }
+  
+  public static function getHealthCheckFactory() {
+    if (self::$healthCheckFactory == null) {
+      $f = new HealthCheckFactory();
+      self::$healthCheckFactory = $f;
+      return $f;
+    } else {
+      return self::$healthCheckFactory;
+    }
+  }
+  
+  public static function getHealthCheckAgentFactory() {
+    if (self::$healthCheckAgentFactory == null) {
+      $f = new HealthCheckAgentFactory();
+      self::$healthCheckAgentFactory = $f;
+      return $f;
+    } else {
+      return self::$healthCheckAgentFactory;
+    }
+  }
+  
+  public static function getSpeedFactory() {
+    if (self::$speedFactory == null) {
+      $f = new SpeedFactory();
+      self::$speedFactory = $f;
+      return $f;
+    } else {
+      return self::$speedFactory;
     }
   }
   
