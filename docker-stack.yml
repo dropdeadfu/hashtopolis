@@ -35,6 +35,8 @@ services:
         PHP.post_max_size: "20G"
     networks:
         - htp-net
+    depends_on:
+        - mariadb
     deploy:
         mode: global
 

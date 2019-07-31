@@ -6,7 +6,7 @@ WORKDIR /app/
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
-    mysql-client \
+#    mysql-client \
     libpng-dev \
     libjpeg62-turbo-dev \
     libfreetype6-dev \
@@ -64,4 +64,4 @@ RUN chmod -R 775 /app
 EXPOSE 9000
 
 
-CMD ["php-fpm", "-d upload_max_filesize=10G"]
+CMD ./entrypoint.sh
