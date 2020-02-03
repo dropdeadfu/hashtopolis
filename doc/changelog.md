@@ -1,10 +1,25 @@
-# v0.10.1 -> v0.x.x
+# v0.10.1 -> v0.11.0
 
 ## Bugfixes
 
 - Fixed wrong task speed summation for task overview page.
+- Fixed error on hashlist hash retrieval.
 - Fixed XSS on hashes view page when printing a hashlist.
 - Fixed missing check for blacklisted characters when editing task.
+- Fixed issue with creating a preconfigured task from the API.
+- Fixed wrong rendering of forms when showing supertasks on hashlist pages.
+- Fixed wrong reporting of speed on tasks overview due to cached speeds.
+- Fixed wrong search value of tasks list on hashlist details page.
+- Fixed missing update of cracked count for superhashlists.
+- Fixed listing of hashlists and hashes of lists which should not be accessible by user.
+
+## Enhancements
+
+- Temperature and util thresholds for agent status page can be configured.
+- User API can provide all cracks for a given task.
+- User API provides information if task is complete or not.
+- User API can provide all cracks for a given hashlist.
+- Support for new Hashcat versions without 32/64-bit naming.
 
 # v0.10.0 -> v0.10.1
 
